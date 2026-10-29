@@ -1,0 +1,2401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="description" content="Territorio Vivo: naturaleza, cultura y formas responsables de recorrer Argentina.">
+<title>Territorio Vivo — Paisajes para cuidar</title>
+
+<!-- Mapa interactivo -->
+<link rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  crossorigin="">
+
+<style>
+:root {
+  --paper: #f5f2e9;
+  --ink: #292f27;
+  --forest: #354b38;
+  --moss: #758268;
+  --clay: #b66d4b;
+  --line: #d7d5c9;
+  --muted: #6d7167;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: "Trebuchet MS", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+img { display: block; max-width: 100%; }
+
+a { color: inherit; }
+
+button, input { font: inherit; }
+
+button, a { -webkit-tap-highlight-color: transparent; }
+
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--clay);
+  outline-offset: 4px;
+}
+
+.wrap {
+  width: min(1120px, 88%);
+  margin-inline: auto;
+}
+
+.kicker {
+  color: var(--clay);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: .72rem;
+  font-weight: bold;
+}
+
+h1, h2, h3 {
+  font-weight: normal;
+  line-height: 1.12;
+}
+
+h2 {
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  letter-spacing: -1.3px;
+  margin: 12px 0 22px;
+}
+
+p { margin-top: 0; }
+
+.muted { color: var(--muted); }
+
+/* NAVEGACIÓN */
+
+header {
+  height: 72px;
+  padding: 0 6%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo {
+  font-family: var(--serif);
+  font-size: 1.45rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.logo span { color: var(--clay); }
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2.5vw, 30px);
+}
+
+nav a {
+  text-decoration: none;
+  color: #4f554b;
+  font-size: .86rem;
+}
+
+nav a:hover { color: var(--clay); }
+
+.menu-toggle {
+  display: none;
+  border: 0;
+  background: transparent;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: var(--forest);
+}
+
+/* PORTADA */
+
+.hero {
+  min-height: min(730px, calc(100svh - 72px));
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  color: white;
+  background: #34483a;
+}
+
+.hero-images, .hero-image {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-image {
+  background-position: center;
+  background-size: cover;
+  opacity: 0;
+  animation: landscape 24s infinite;
+}
+
+.hero-image:nth-child(1) {
+  background-image:
+    linear-gradient(90deg, #17291ed9 0%, #17291e70 55%, #17291e20 100%),
+    url("https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=2000&q=85");
+}
+
+.hero-image:nth-child(2) {
+  background-image:
+    linear-gradient(90deg, #17291ed9 0%, #17291e70 55%, #17291e20 100%),
+    url("https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=2000&q=85");
+  animation-delay: 8s;
+}
+
+.hero-image:nth-child(3) {
+  background-image:
+    linear-gradient(90deg, #17291ed9 0%, #17291e70 55%, #17291e20 100%),
+    url("https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=2000&q=85");
+  animation-delay: 16s;
+}
+
+@keyframes landscape {
+  0% { opacity: 0; transform: scale(1); }
+  5% { opacity: 1; }
+  28% { opacity: 1; transform: scale(1.045); }
+  34% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* AVES VOLANDO EN EL HERO */
+.hero-birds {
+  position: absolute;
+  top: 15%;
+  left: -100px;
+  width: 120px;
+  z-index: 3;
+  opacity: 0.7;
+  pointer-events: none;
+  animation: flyBirds 22s linear infinite;
+}
+
+@keyframes flyBirds {
+  0% { transform: translate(0, 0) scale(0.7); }
+  50% { transform: translate(60vw, -30px) scale(0.9); }
+  100% { transform: translate(115vw, 10px) scale(0.7); }
+}
+
+.hero-content {
+  width: min(780px, 84%);
+  margin-left: max(8%, calc((100% - 1120px) / 2));
+  position: relative;
+  z-index: 2;
+  padding: 100px 0 140px;
+}
+
+.hero .kicker {
+  color: #e6c9a4;
+  margin-bottom: 25px;
+}
+
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(3.4rem, 8vw, 7rem);
+  letter-spacing: -3px;
+  line-height: .98;
+  max-width: 800px;
+  margin: 0 0 28px;
+}
+
+.hero h1 em {
+  color: #d7dcb9;
+  font-weight: normal;
+}
+
+.hero-content p:not(.kicker) {
+  max-width: 510px;
+  font-size: 1.05rem;
+  color: #f1efe6;
+}
+
+.text-link {
+  display: inline-block;
+  margin-top: 15px;
+  padding-bottom: 5px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+
+.hero-bottom {
+  position: absolute;
+  z-index: 3;
+  left: 6%;
+  right: 6%;
+  bottom: 28px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: .77rem;
+  color: #f0eee4;
+}
+
+.hero-bottom p { margin: 0; }
+
+/* PEQUEÑO CAMINANTE ILUSTRADO EN HERO (TREKKING) */
+
+.walker {
+  position: absolute;
+  right: 10%;
+  bottom: 50px;
+  width: 130px;
+  z-index: 4;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,0.3));
+  animation: stroll 2.5s ease-in-out infinite;
+}
+
+.walker svg {
+  display: block;
+  width: 100%;
+}
+
+@keyframes stroll {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+/* MONIGOTE FIJO/ANIMADO ESQUINA INFERIOR */
+.floating-walker-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 65px;
+  height: 65px;
+  z-index: 999;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  padding: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.floating-walker-widget svg {
+  width: 100%;
+  height: 100%;
+  animation: miniWalk 1.2s infinite ease-in-out alternate;
+}
+
+@keyframes miniWalk {
+  0% { transform: translateY(0) rotate(-4deg); }
+  100% { transform: translateY(-5px) rotate(4deg); }
+}
+
+/* PRESENTACIÓN Y HOJAS CAYENDO */
+
+.intro {
+  padding: 110px 0;
+  display: grid;
+  grid-template-columns: .7fr 1.3fr;
+  gap: 9%;
+  position: relative;
+}
+
+.falling-leaf {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  opacity: 0.6;
+  pointer-events: none;
+  animation: leafFall 9s linear infinite;
+}
+
+.falling-leaf:nth-child(1) { top: -20px; left: 10%; animation-delay: 0s; }
+.falling-leaf:nth-child(2) { top: -20px; left: 50%; animation-delay: 3s; }
+.falling-leaf:nth-child(3) { top: -20px; left: 85%; animation-delay: 6s; }
+
+@keyframes leafFall {
+  0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 0.8; }
+  50% { transform: translateY(180px) rotate(180deg) translateX(25px); opacity: 0.5; }
+  100% { transform: translateY(360px) rotate(360deg) translateX(-15px); opacity: 0; }
+}
+
+.intro h2 { max-width: 420px; }
+
+.intro-copy .lead {
+  font-family: var(--serif);
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  line-height: 1.5;
+  color: var(--forest);
+}
+
+.intro-copy p:last-child {
+  max-width: 620px;
+  color: var(--muted);
+}
+
+/* VIDEO */
+
+.video-section {
+  padding: 90px 0;
+  background: #e8e7dc;
+}
+
+.video-intro {
+  max-width: 650px;
+  margin-bottom: 34px;
+}
+
+.video-intro p { color: var(--muted); }
+
+.video-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  max-height: 650px;
+  background: #273d30;
+  overflow: hidden;
+}
+
+.video-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 30px 20px;
+  color: #ffffff;
+  background:
+    linear-gradient(rgba(18, 30, 24, 0.65), rgba(18, 30, 24, 0.85)),
+    url("https://images.unsplash.com/photo-1527004013197-933c4bb611b3?auto=format&fit=crop&w=1500&q=80")
+    center / cover no-repeat;
+  z-index: 3;
+}
+
+.video-cover.is-hidden { display: none !important; }
+
+.video-badge {
+  display: inline-block;
+  background: rgba(182, 109, 75, 0.95);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+
+.video-play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #b66d4b;
+  color: #ffffff;
+  text-decoration: none;
+  margin: 10px auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, background 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.video-play-btn:hover {
+  transform: scale(1.08);
+  background: #c97d5a;
+}
+
+.video-play-btn svg {
+  width: 32px;
+  height: 32px;
+  fill: currentColor;
+  margin-left: 4px;
+}
+
+.video-cover-title {
+  font-family: var(--serif);
+  font-size: clamp(1.4rem, 2.8vw, 2.1rem);
+  font-weight: normal;
+  margin: 8px 0 6px;
+  line-height: 1.25;
+}
+
+.video-cover-desc {
+  max-width: 580px;
+  font-size: clamp(0.88rem, 1.3vw, 1rem);
+  color: #e2e8e0;
+  margin: 0 auto 18px;
+  line-height: 1.5;
+}
+
+.video-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #b66d4b;
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 10px 22px;
+  border-radius: 30px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  transition: background 0.2s;
+}
+
+.video-btn-primary:hover {
+  background: #c97d5a;
+}
+
+.video-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.88rem;
+  padding: 10px 18px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.video-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.video-frame iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  z-index: 2;
+}
+
+.video-help {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  padding: 25px;
+  color: white;
+  background:
+    linear-gradient(#172a2280, #172a22db),
+    url("https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1500&q=80")
+    center / cover;
+}
+
+.video-help strong {
+  font-family: var(--serif);
+  font-size: 2rem;
+}
+
+.video-help small { margin-top: 8px; }
+
+/* QUÉ HACEMOS CON MONIGOTE CELEBRANDO */
+
+.about {
+  padding: 105px 0;
+  position: relative;
+}
+
+.about-top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10%;
+  align-items: start;
+}
+
+.about-top p { color: var(--muted); }
+
+.about-top .lead {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  color: var(--forest);
+}
+
+/* MONIGOTE SALUDANDO/CELEBRANDO */
+.dancer-illustration {
+  width: 90px;
+  margin-top: 15px;
+}
+
+.dancer-illustration svg {
+  display: block;
+  width: 100%;
+}
+
+.waving-arm {
+  transform-origin: 52px 42px;
+  animation: wave 1.8s infinite ease-in-out;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-25deg); }
+}
+
+.values {
+  margin-top: 55px;
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 35px;
+}
+
+.value {
+  padding-top: 22px;
+}
+
+.value span {
+  color: var(--clay);
+  font-size: .8rem;
+  display: inline-block;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); color: var(--forest); }
+}
+
+.value h3 {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  margin: 12px 0;
+}
+
+.value p {
+  color: var(--muted);
+  font-size: .95rem;
+}
+
+/* DESAFÍO AMBIENTAL */
+
+.challenge {
+  padding: 90px 0;
+  background: var(--forest);
+  color: var(--paper);
+}
+
+.challenge-grid {
+  display: grid;
+  grid-template-columns: .9fr 1.1fr;
+  gap: 9%;
+  align-items: center;
+}
+
+.challenge h2 { max-width: 470px; }
+
+.challenge .kicker { color: #d6b78f; }
+
+.challenge-intro p { color: #e1e5d9; }
+
+.recycler-illustration {
+  width: 140px;
+  margin-top: 25px;
+}
+
+.recycler-illustration svg {
+  display: block;
+  width: 100%;
+}
+
+.quiz {
+  padding: 32px;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 4px;
+}
+
+.quiz-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 13px;
+  color: var(--muted);
+  font-size: .85rem;
+  font-weight: bold;
+}
+
+.quiz h3 {
+  font-family: var(--serif);
+  font-size: 1.45rem;
+  margin: 20px 0;
+}
+
+.answers {
+  display: grid;
+  gap: 10px;
+}
+
+.answer {
+  text-align: left;
+  padding: 13px 15px;
+  background: #fffdf7;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  color: var(--ink);
+  transition: all 0.2s ease;
+}
+
+.answer:hover:not(:disabled) {
+  border-color: var(--moss);
+  background: #eef0e6;
+}
+
+.answer:disabled { cursor: default; }
+
+.answer.right {
+  background: #e0e9d8;
+  border-color: #6d8a60;
+  font-weight: bold;
+}
+
+.answer.wrong {
+  background: #f1e0d7;
+  border-color: #b66d4b;
+}
+
+#feedback {
+  color: var(--muted);
+  font-size: .92rem;
+  margin: 20px 0 0;
+  min-height: 48px;
+}
+
+.next-btn, .reset {
+  margin-top: 15px;
+  border: 0;
+  background: var(--forest);
+  color: white;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-size: .9rem;
+  transition: background 0.2s;
+}
+
+.next-btn:hover, .reset:hover {
+  background: var(--clay);
+}
+
+.next-btn[hidden], .reset[hidden] { display: none; }
+
+/* ACCESOS A SECCIONES Y TARJETAS */
+
+.explore {
+  padding: 105px 0;
+}
+
+.explore-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+.explore-heading p {
+  max-width: 340px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.feature {
+  text-decoration: none;
+  border-top: 1px solid #bcbfb1;
+  display: flex;
+  flex-direction: column;
+}
+
+.feature img {
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+  margin-top: 18px;
+  filter: saturate(.78);
+  transition: filter .3s, transform .3s;
+}
+
+.feature:hover img {
+  filter: saturate(1.1);
+  transform: scale(1.02);
+}
+
+.feature .number {
+  color: var(--clay);
+  font-size: .78rem;
+  margin-top: 20px;
+}
+
+.feature h3 {
+  font-family: var(--serif);
+  font-size: 2rem;
+  margin: 8px 0;
+}
+
+.feature p {
+  color: var(--muted);
+  font-size: .93rem;
+}
+
+.feature strong {
+  font-size: .88rem;
+  font-weight: normal;
+  color: var(--forest);
+  margin: auto 0 22px;
+  padding-top: 12px;
+}
+
+/* PÁGINAS INTERNAS DENTRO DEL MISMO HTML */
+
+.content-page {
+  display: none;
+  min-height: 65vh;
+  padding: 75px 0 100px;
+}
+
+.content-page:target {
+  display: block;
+  animation: reveal .25s ease-out;
+}
+
+body:has(.content-page:target) .home-content {
+  display: none;
+}
+
+body:has(.content-page:target) .home-link {
+  color: var(--clay);
+}
+
+@keyframes reveal {
+  from { opacity: .5; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-heading {
+  max-width: 760px;
+  margin-bottom: 35px;
+}
+
+.page-heading h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  line-height: 1.05;
+  margin: 15px 0 22px;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 35px;
+  color: var(--forest);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+}
+
+/* REVISTA */
+
+.magazine-box {
+  border: 1px solid var(--line);
+  background: #fffdf7;
+  padding: 22px;
+}
+
+.magazine-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.action-link {
+  display: inline-block;
+  padding: 11px 17px;
+  background: var(--forest);
+  color: white;
+  text-decoration: none;
+  font-size: .9rem;
+}
+
+.pdf-frame {
+  width: 100%;
+  height: 680px;
+  border: 1px solid var(--line);
+  background: white;
+}
+
+/* MAPA */
+
+#map {
+  height: 560px;
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #e3e7dc;
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.map-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.map-search-wrap {
+  flex: 1 1 260px;
+}
+
+.map-search-wrap input {
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--ink);
+  font-size: .92rem;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.map-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.map-filter-group select {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--ink);
+  font-size: .88rem;
+  cursor: pointer;
+}
+
+.level-filters {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.level-btn {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .15s ease;
+}
+
+.level-btn:hover {
+  border-color: var(--forest);
+}
+
+.level-btn.active {
+  background: var(--forest);
+  color: white;
+  border-color: var(--forest);
+}
+
+.level-btn .badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: .75rem;
+  background: rgba(0,0,0,0.08);
+}
+
+.level-btn.active .badge {
+  background: rgba(255,255,255,0.25);
+}
+
+.level-btn.level-oro::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #d4af37;
+}
+
+.level-btn.level-plata::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #8b9bb4;
+}
+
+.level-btn.level-bronce::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #c57d56;
+}
+
+.map-status {
+  font-size: .86rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+  min-height: 20px;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+  font-size: .84rem;
+  color: var(--ink);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.dot-oro { background: #d4af37; border: 1.5px solid #a88518; }
+.dot-plata { background: #94a3b8; border: 1.5px solid #64748b; }
+.dot-bronce { background: #c57d56; border: 1.5px solid #8c4c28; }
+
+.map-note {
+  color: var(--muted);
+  font-size: .9rem;
+  margin-top: 15px;
+}
+
+/* POPUP HMV */
+.leaflet-popup-content-wrapper {
+  border-radius: 6px;
+  padding: 4px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+  font-family: var(--sans);
+}
+
+.leaflet-popup-content {
+  margin: 10px 14px;
+  line-height: 1.45;
+}
+
+.hmv-popup {
+  font-size: .88rem;
+  max-width: 270px;
+}
+
+.hmv-popup-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+
+.hmv-badge-oro {
+  background: #fbf3d5;
+  color: #8f6e0b;
+  border: 1px solid #d4af37;
+}
+
+.hmv-badge-plata {
+  background: #edf2f7;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.hmv-badge-bronce {
+  background: #faebe3;
+  color: #92400e;
+  border: 1px solid #d97706;
+}
+
+.hmv-popup-title {
+  font-family: var(--serif);
+  font-size: 1.12rem;
+  font-weight: bold;
+  color: var(--forest);
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+.hmv-popup-loc {
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 6px;
+  font-size: .84rem;
+}
+
+.hmv-popup-dir, .hmv-popup-tel, .hmv-popup-email {
+  margin: 3px 0;
+  font-size: .82rem;
+  color: #4a5568;
+}
+
+.hmv-popup-web {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.hmv-popup-web a {
+  color: var(--forest);
+  font-weight: bold;
+  text-decoration: underline;
+  font-size: .84rem;
+}
+
+.hmv-custom-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+
+.hmv-custom-pin:hover {
+  transform: scale(1.28);
+  z-index: 9999 !important;
+}
+
+.pin-oro {
+  background: radial-gradient(circle at 35% 35%, #ffd700, #b8860b);
+  border: 2px solid #ffffff;
+}
+
+.pin-plata {
+  background: radial-gradient(circle at 35% 35%, #e2e8f0, #64748b);
+  border: 2px solid #ffffff;
+}
+
+.pin-bronce {
+  background: radial-gradient(circle at 35% 35%, #f6ad55, #9c4221);
+  border: 2px solid #ffffff;
+}
+
+/* ECOTURISMO */
+
+.region-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-top: 30px;
+}
+
+.region {
+  padding: 25px;
+  border: 1px solid var(--line);
+  background: #fbf9f2;
+}
+
+.region h3 {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  margin: 0 0 10px;
+}
+
+.region p {
+  color: var(--muted);
+  font-size: .92rem;
+}
+
+.region a {
+  display: inline-block;
+  color: var(--forest);
+  font-weight: bold;
+  font-size: .9rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--forest);
+}
+
+/* PIE */
+
+footer {
+  padding: 32px 6%;
+  background: #263d30;
+  color: #f5f2e9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+footer .logo { color: white; }
+
+footer p {
+  margin: 0;
+  font-size: .85rem;
+  color: #d5ddcf;
+}
+
+footer small { color: #d5ddcf; }
+
+/* CELULARES */
+
+@media (max-width: 800px) {
+  header { padding: 0 6%; }
+
+  .menu-toggle { display: block; }
+
+  nav {
+    display: none;
+    position: absolute;
+    top: 72px;
+    left: 0;
+    right: 0;
+    padding: 24px 6%;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  nav.open { display: flex; }
+
+  .hero { min-height: 690px; }
+
+  .hero-content {
+    width: 86%;
+    margin-left: 7%;
+    padding: 80px 0 130px;
+  }
+
+  .hero h1 {
+    font-size: clamp(3rem, 12vw, 5rem);
+    letter-spacing: -1.5px;
+  }
+
+  .walker {
+    width: 90px;
+    right: 5%;
+    bottom: 50px;
+  }
+
+  .intro,
+  .about-top,
+  .challenge-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .intro { padding: 75px 0; }
+
+  .video-section,
+  .about,
+  .challenge,
+  .explore {
+    padding: 75px 0;
+  }
+
+  .values {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    margin-top: 30px;
+  }
+
+  .value { padding-bottom: 10px; }
+
+  .explore-heading {
+    display: block;
+  }
+
+  .feature-grid,
+  .region-list {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+
+  .feature img { height: 260px; }
+
+  .pdf-frame { height: 65vh; }
+
+  #map { height: 420px; }
+
+  .hero-bottom { font-size: .7rem; }
+
+  footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .hero-image, .walker, .floating-walker-widget svg, .hero-birds, .falling-leaf, .waving-arm {
+    animation: none;
+  }
+
+  .hero-image:first-child { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <a class="logo home-link" href="#inicio">Territorio<span> Vivo.</span></a>
+
+  <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+
+  <nav id="navigation">
+    <a href="#inicio" class="home-link">Inicio</a>
+    <a href="#proyecto" class="home-link">El proyecto</a>
+    <a href="#revista">La revista</a>
+    <a href="#mapa-pagina">Mapa</a>
+    <a href="#ecoturismo">Ecoturismo</a>
+  </nav>
+</header>
+
+<!-- WIDGET FLOTANTE: MONIGOTE CAMINANTE EN LA ESQUINA -->
+<div class="floating-walker-widget" title="¡Cuidemos el territorio!">
+  <svg viewBox="0 0 100 130" aria-hidden="true">
+    <circle cx="50" cy="20" r="12" fill="#c58a61"/>
+    <path d="M40 18 Q38 5 52 6 Q64 8 62 20 L55 15 L45 17Z" fill="#354b38"/>
+    <path d="M40 38 L62 38 L68 76 L38 76Z" fill="#758268"/>
+    <path d="M42 42 L25 60 L32 72" fill="none" stroke="#c58a61" stroke-width="7" stroke-linecap="round"/>
+    <path d="M60 42 L75 58 L85 52" fill="none" stroke="#c58a61" stroke-width="7" stroke-linecap="round"/>
+    <path d="M42 74 L30 100 L18 120" fill="none" stroke="#263d30" stroke-width="9" stroke-linecap="round"/>
+    <path d="M60 74 L70 100 L85 118" fill="none" stroke="#263d30" stroke-width="9" stroke-linecap="round"/>
+    <path d="M10 120 L24 116 L28 124 L12 126Z" fill="#b66d4b"/>
+    <path d="M78 116 L90 116 L94 122 L82 124Z" fill="#b66d4b"/>
+  </svg>
+</div>
+
+<!-- INICIO: todo lo que pertenece a la portada -->
+<div class="home-content" id="home">
+
+  <main>
+    <section class="hero" id="inicio">
+      <!-- PÁJAROS VOLANDO EN EL FONDO -->
+      <div class="hero-birds" aria-hidden="true">
+        <svg viewBox="0 0 100 40">
+          <path d="M0 20 Q15 0 30 20 Q45 0 60 20" fill="none" stroke="#f0eee4" stroke-width="3" stroke-linecap="round"/>
+          <path d="M40 30 Q50 15 60 30 Q70 15 80 30" fill="none" stroke="#f0eee4" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="hero-images" aria-hidden="true">
+        <div class="hero-image"></div>
+        <div class="hero-image"></div>
+        <div class="hero-image"></div>
+      </div>
+
+      <div class="hero-content">
+        <p class="kicker">Una mirada al territorio argentino</p>
+
+        <h1>Hay lugares que merecen ser <em>cuidados.</em></h1>
+
+        <p>
+          Paisajes, comunidades y formas de viajar que nos recuerdan
+          por qué vale la pena conocer nuestro entorno y protegerlo.
+        </p>
+
+        <a class="text-link" href="#proyecto">Conocé nuestra propuesta ↘</a>
+      </div>
+
+      <!-- MONIGOTE CON MOCHILA Y BASTONES DE TREKKING MEJORADO -->
+      <div class="walker" aria-label="Ilustración de una persona haciendo trekking">
+        <svg viewBox="0 0 120 160" aria-hidden="true">
+          <!-- Sombrero de montaña -->
+          <path d="M35 28 C35 15 75 15 75 28 L88 32 C88 32 78 35 55 35 C32 35 22 32 22 32 Z" fill="#b66d4b"/>
+          <!-- Cabeza -->
+          <circle cx="55" cy="34" r="12" fill="#d09873"/>
+          <!-- Mochila de Trekking gigante -->
+          <rect x="20" y="45" width="22" height="42" rx="5" fill="#b66d4b"/>
+          <rect x="18" y="40" width="26" height="10" rx="3" fill="#758268"/>
+          <!-- Cuerpo / Campera de trekking -->
+          <path d="M42 46 L68 46 L74 85 L38 85Z" fill="#354b38"/>
+          <!-- Cinturón de soporte -->
+          <rect x="38" y="78" width="36" height="6" fill="#292f27"/>
+          <!-- Brazo izquierdo sosteniendo bastón -->
+          <path d="M44 50 L28 72 L22 92" fill="none" stroke="#d09873" stroke-width="7" stroke-linecap="round"/>
+          <!-- Bastón Trekking Izquierdo -->
+          <line x1="20" y1="65" x2="16" y2="150" stroke="#d7d5c9" stroke-width="3"/>
+          <rect x="18" y="68" width="4" height="12" fill="#292f27"/>
+          <!-- Brazo derecho impulsando bastón -->
+          <path d="M66 50 L85 70 L98 88" fill="none" stroke="#d09873" stroke-width="7" stroke-linecap="round"/>
+          <!-- Bastón Trekking Derecho -->
+          <line x1="98" y1="65" x2="108" y2="150" stroke="#d7d5c9" stroke-width="3"/>
+          <rect x="96" y="68" width="4" height="12" fill="#292f27"/>
+          <!-- Pierna izquierda en movimiento -->
+          <path d="M45 84 L32 115 L20 142" fill="none" stroke="#292f27" stroke-width="10" stroke-linecap="round"/>
+          <!-- Pierna derecha atrasada -->
+          <path d="M65 84 L78 115 L92 138" fill="none" stroke="#292f27" stroke-width="10" stroke-linecap="round"/>
+          <!-- Botas de Trekking -->
+          <path d="M10 142 L24 138 L28 148 L10 150Z" fill="#b66d4b"/>
+          <path d="M85 136 L98 136 L104 146 L86 147Z" fill="#b66d4b"/>
+        </svg>
+      </div>
+
+      <div class="hero-bottom">
+        <p>Conocer · Respetar · Conservar</p>
+        <p>Argentina, de norte a sur.</p>
+      </div>
+    </section>
+
+    <section class="intro wrap" id="proyecto">
+      <!-- HOJAS AMBIENTALES CAYENDO SUAVEMENTE -->
+      <svg class="falling-leaf" viewBox="0 0 30 30" aria-hidden="true"><path d="M15 0 C25 10 25 20 15 30 C5 20 5 10 15 0 Z" fill="#b66d4b"/></svg>
+      <svg class="falling-leaf" viewBox="0 0 30 30" aria-hidden="true"><path d="M15 0 C25 10 25 20 15 30 C5 20 5 10 15 0 Z" fill="#758268"/></svg>
+      <svg class="falling-leaf" viewBox="0 0 30 30" aria-hidden="true"><path d="M15 0 C25 10 25 20 15 30 C5 20 5 10 15 0 Z" fill="#354b38"/></svg>
+
+      <div>
+        <p class="kicker">Sobre el proyecto</p>
+        <h2>Un territorio no es solo un paisaje.</h2>
+      </div>
+
+      <div class="intro-copy">
+        <p class="lead">
+          También son las personas que lo habitan, las historias que
+          guarda y la biodiversidad que lo mantiene vivo.
+        </p>
+        <p>
+          Territorio Vivo es un espacio para acercarnos al patrimonio
+          natural y cultural de Argentina. Reunimos información,
+          herramientas y propuestas para descubrir el territorio con
+          curiosidad y recorrerlo de una manera más responsable.
+        </p>
+      </div>
+    </section>
+
+    <section class="video-section" id="video">
+      <div class="wrap">
+        <div class="video-intro">
+          <p class="kicker">Un recorrido en imágenes</p>
+          <h2>Mirar el lugar con otros ojos.</h2>
+          <p>
+            Un video para presentar el proyecto, sus objetivos y los
+            paisajes que nos inspiran.
+          </p>
+        </div>
+
+        <div class="video-frame" id="video-box">
+          <div class="video-cover" id="video-cover">
+            <span class="video-badge">4K Ultra HD &middot; Paisajes de Argentina</span>
+            <h3 class="video-cover-title">Recorrido por los paisajes naturales</h3>
+            <p class="video-cover-desc">
+              Patagonia, Glaciar Perito Moreno, Cataratas del Iguaz&uacute;, Cerro Fitz Roy y Quebrada de Humahuaca.
+            </p>
+
+            <a class="video-play-btn" href="https://www.youtube.com/watch?v=YDL8HbY9ENU" target="_blank" rel="noopener noreferrer" title="Reproducir en YouTube">
+              <svg viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+            </a>
+
+            <div class="video-actions">
+              <a class="video-btn-primary" href="https://www.youtube.com/watch?v=YDL8HbY9ENU" target="_blank" rel="noopener noreferrer">
+                &#9654; Ver en YouTube en 4K
+              </a>
+              <button type="button" class="video-btn-secondary" id="btn-toggle-embed">
+                &#128250; Cargar reproductor integrado
+              </button>
+            </div>
+          </div>
+
+          <iframe
+            id="yt-iframe"
+            src=""
+            title="Paisajes de Argentina en 4K - Territorio Vivo"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+    </section>
+
+    <section class="about wrap">
+      <p class="kicker">Qué nos mueve</p>
+
+      <div class="about-top">
+        <div>
+          <h2>Conocer para cuidar mejor.</h2>
+          <!-- MONIGOTE SALUDANDO/CELEBRANDO -->
+          <div class="dancer-illustration" aria-label="Monigote saludando">
+            <svg viewBox="0 0 100 130" aria-hidden="true">
+              <circle cx="50" cy="22" r="11" fill="#d09873"/>
+              <path d="M38 38 L62 38 L66 78 L34 78Z" fill="#354b38"/>
+              <!-- Brazo saludando con animación -->
+              <g class="waving-arm">
+                <path d="M60 42 L80 32 L90 18" fill="none" stroke="#d09873" stroke-width="7" stroke-linecap="round"/>
+                <circle cx="92" cy="16" r="4" fill="#d09873"/>
+              </g>
+              <path d="M40 42 L25 58 L18 72" fill="none" stroke="#d09873" stroke-width="7" stroke-linecap="round"/>
+              <path d="M40 78 L32 108 L22 124" fill="none" stroke="#292f27" stroke-width="8" stroke-linecap="round"/>
+              <path d="M60 78 L68 108 L78 124" fill="none" stroke="#292f27" stroke-width="8" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <div>
+          <p class="lead">
+            Acercar el ambiente a las personas es también una forma
+            de fomentar su cuidado.
+          </p>
+          <p>
+            Queremos que la información sea útil y accesible: que sirva
+            para aprender, ubicar lugares de interés y encontrar
+            iniciativas locales vinculadas al turismo responsable.
+          </p>
+        </div>
+      </div>
+
+      <div class="values">
+        <article class="value">
+          <span>01 — COMPARTIR</span>
+          <h3>Historias y saberes</h3>
+          <p>Contenidos para conocer el patrimonio natural y cultural.</p>
+        </article>
+
+        <article class="value">
+          <span>02 — EXPLORAR</span>
+          <h3>Lugares en el mapa</h3>
+          <p>Una herramienta para orientarse y descubrir nuevos destinos.</p>
+        </article>
+
+        <article class="value">
+          <span>03 — ENCONTRAR</span>
+          <h3>Propuestas locales</h3>
+          <p>Recursos para buscar experiencias de turismo en contacto con la naturaleza.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="challenge">
+      <div class="wrap challenge-grid">
+        <div class="challenge-intro">
+          <p class="kicker">Una pregunta para el camino</p>
+          <h2>Pequeñas decisiones, grandes diferencias.</h2>
+          <p>
+            Poné a prueba tus conocimientos sobre hábitos sostenibles en la naturaleza y llevate una enseñanza para tu próxima salida.
+          </p>
+
+          <!-- MONIGOTE SEPARANDO Y RECICLANDO BASURA -->
+          <div class="recycler-illustration" aria-label="Ilustración de personita separando residuos">
+            <svg viewBox="0 0 130 130" aria-hidden="true">
+              <!-- Cesto de reciclaje -->
+              <rect x="75" y="60" width="38" height="55" rx="5" fill="#758268" stroke="#d7d5c9" stroke-width="2"/>
+              <path d="M80 72 L108 72 M80 82 L108 82 M80 92 L108 92" stroke="#f5f2e9" stroke-width="2" stroke-dasharray="3,3"/>
+              <!-- Símbolo reciclaje simplificado en cesto -->
+              <polygon points="94,98 90,105 98,105" fill="#f5f2e9"/>
+              <circle cx="94" cy="101" r="5" fill="none" stroke="#f5f2e9" stroke-width="2"/>
+              
+              <!-- Personita -->
+              <circle cx="35" cy="25" r="10" fill="#d09873"/>
+              <path d="M26 40 L46 40 L50 80 L22 80Z" fill="#b66d4b"/>
+              <!-- Piernas agachadas/inclinadas -->
+              <path d="M25 78 L20 100 L32 118" fill="none" stroke="#292f27" stroke-width="7" stroke-linecap="round"/>
+              <path d="M45 78 L48 100 L60 118" fill="none" stroke="#292f27" stroke-width="7" stroke-linecap="round"/>
+              <!-- Brazos depositando residuo -->
+              <path d="M42 45 L62 52 L82 58" fill="none" stroke="#d09873" stroke-width="6" stroke-linecap="round"/>
+              <!-- Botella/Residuo que cae al cesto -->
+              <ellipse cx="83" cy="55" rx="4" ry="7" fill="#e6c9a4" transform="rotate(30 83 55)"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="quiz">
+          <div class="quiz-top">
+            <span id="quiz-progress">Pregunta 1 de 5</span>
+            <span id="score">0 / 5 puntos</span>
+          </div>
+
+          <h3 id="question-text">
+            Cargando pregunta...
+          </h3>
+
+          <div class="answers" id="answers-container">
+            <!-- Opciones dinámicas -->
+          </div>
+
+          <p id="feedback" aria-live="polite">
+            Elegí una opción para responder.
+          </p>
+
+          <button class="next-btn" id="next-btn" hidden>Siguiente pregunta →</button>
+          <button class="reset" id="reset" hidden>Reiniciar desafío ↻</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="explore wrap">
+      <div class="explore-heading">
+        <div>
+          <p class="kicker">Para seguir explorando</p>
+          <h2>El proyecto, en tres recorridos.</h2>
+        </div>
+        <p>
+          Leé, ubicá lugares y buscá experiencias para conectar con
+          el territorio.
+        </p>
+      </div>
+
+      <div class="feature-grid">
+        <!-- IMAGEN DE LA REVISTA CAMBIADA POR UN PINGÜINO DE MAGALLANES -->
+        <a class="feature" href="#revista">
+          <img
+            src="https://images.unsplash.com/photo-1598439210625-5067c578f3f6?auto=format&fit=crop&w=900&q=80"
+            alt="Pingüino de Magallanes en la costa patagónica">
+          <span class="number">01 / LEER</span>
+          <h3>La revista</h3>
+          <p>Artículos y materiales para conocer mejor nuestro entorno.</p>
+          <strong>Abrir la revista ↗</strong>
+        </a>
+
+        <!-- MAPA -->
+        <a class="feature" href="#mapa-pagina">
+          <img
+            src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=900&q=80"
+            alt="Mapa desplegado sobre mesa de madera con brújula">
+          <span class="number">02 / UBICAR</span>
+          <h3>Hoteles Más Verdes</h3>
+          <p>Explorá en el mapa interactivo los alojamientos sustentables certificados de HMV.csv.</p>
+          <strong>Explorar el mapa ↗</strong>
+        </a>
+
+        <a class="feature" href="#ecoturismo">
+          <img
+            src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=900&q=80"
+            alt="Lago y montañas">
+          <span class="number">03 / RECORRER</span>
+          <h3>Ecoturismo local</h3>
+          <p>Buscá actividades y propuestas para conocer la naturaleza.</p>
+          <strong>Buscar propuestas ↗</strong>
+        </a>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- SECCIÓN REVISTA -->
+<section class="content-page" id="revista">
+  <div class="wrap">
+    <a class="back-link" href="#inicio">← Volver al inicio</a>
+
+    <div class="page-heading">
+      <p class="kicker">Territorio Vivo / Publicaciones</p>
+      <h1>La revista</h1>
+      <p>
+        Un espacio para compartir artículos, ideas e historias relacionadas
+        con el ambiente, la cultura y el territorio.
+      </p>
+    </div>
+
+    <div class="magazine-box">
+      <div class="magazine-actions">
+        <div>
+          <strong>Revista en PDF</strong>
+          <div class="muted">Leela acá o guardala en tu dispositivo.</div>
+        </div>
+
+        <a class="action-link" href="revista.pdf" download>
+          Descargar revista ↓
+        </a>
+      </div>
+
+      <iframe class="pdf-frame" src="revista.pdf#toolbar=1"
+        title="Revista Territorio Vivo en PDF">
+      </iframe>
+
+      <p class="map-note">
+        Si el documento no aparece, comprobá que el archivo
+        <strong>revista.pdf</strong> esté subido a la carpeta principal
+        de tu repositorio.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- SECCIÓN MAPA -->
+<section class="content-page" id="mapa-pagina">
+  <div class="wrap">
+    <a class="back-link" href="#inicio">← Volver al inicio</a>
+
+    <div class="page-heading">
+      <p class="kicker">Territorio Vivo / Alojamientos Sustentables</p>
+      <h1>Red de Hoteles Más Verdes</h1>
+      <p>
+        Mapa interactivo construido con los datos de <strong>HMV.csv</strong>. Descubrí y localizá hoteles y alojamientos con certificación de sustentabilidad ambiental en Argentina y la región.
+      </p>
+    </div>
+
+    <!-- BARRA DE BÚSQUEDA Y FILTROS -->
+    <div class="map-toolbar">
+      <div class="map-search-wrap">
+        <input type="search" id="hmv-search" placeholder="Buscar por hotel, localidad o provincia..." aria-label="Buscar hotel">
+      </div>
+      <div class="map-filter-group">
+        <select id="hmv-prov-select" aria-label="Filtrar por provincia o país">
+          <option value="">Todas las provincias / regiones</option>
+        </select>
+        <div class="level-filters" role="group" aria-label="Filtrar por nivel de certificación">
+          <button type="button" class="level-btn active" data-level="all">Todos <span class="badge" id="count-all">0</span></button>
+          <button type="button" class="level-btn level-oro" data-level="oro">Oro <span class="badge" id="count-oro">0</span></button>
+          <button type="button" class="level-btn level-plata" data-level="plata">Plata <span class="badge" id="count-plata">0</span></button>
+          <button type="button" class="level-btn level-bronce" data-level="bronce">Bronce <span class="badge" id="count-bronce">0</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-status" id="hmv-status" aria-live="polite">Cargando alojamientos desde HMV.csv...</div>
+
+    <div id="map" aria-label="Mapa interactivo de Hoteles Más Verdes"></div>
+
+    <div class="map-legend">
+      <span class="legend-item"><span class="legend-dot dot-oro"></span> Nivel Oro (Excelencia ambiental)</span>
+      <span class="legend-item"><span class="legend-dot dot-plata"></span> Nivel Plata (Avanzado)</span>
+      <span class="legend-item"><span class="legend-dot dot-bronce"></span> Nivel Bronce (Inicial)</span>
+    </div>
+
+    <p class="map-note">
+      Los alojamientos mostrados provienen directamente del archivo <strong>HMV.csv</strong> de la iniciativa Hoteles Más Verdes. Hacé clic en cualquier marcador para consultar datos de contacto, nivel de certificación y sitio web oficial.
+    </p>
+  </div>
+</section>
+
+<!-- SECCIÓN ECOTURISMO -->
+<section class="content-page" id="ecoturismo">
+  <div class="wrap">
+    <a class="back-link" href="#inicio">← Volver al inicio</a>
+
+    <div class="page-heading">
+      <p class="kicker">Territorio Vivo / Experiencias</p>
+      <h1>Salir, conocer, cuidar.</h1>
+      <p>
+        El ecoturismo invita a descubrir los ambientes naturales con
+        respeto por la biodiversidad y por las comunidades locales.
+        Elegí una región para buscar propuestas y actividades.
+      </p>
+    </div>
+
+    <div class="region-list">
+      <article class="region">
+        <h3>Patagonia</h3>
+        <p>Senderos, montañas, bosques y lagos. Consultá opciones de
+          caminatas y turismo de naturaleza.</p>
+        <a target="_blank" rel="noopener"
+           href="https://www.google.com/maps/search/ecoturismo+Patagonia+Argentina/">
+          Buscar propuestas en Patagonia ↗
+        </a>
+      </article>
+
+      <article class="region">
+        <h3>Esteros del Iberá</h3>
+        <p>Humedales, fauna silvestre y experiencias vinculadas a la
+          conservación.</p>
+        <a target="_blank" rel="noopener"
+           href="https://www.google.com/maps/search/turismo+de+naturaleza+Esteros+del+Ibera/">
+          Buscar propuestas en Iberá ↗
+        </a>
+      </article>
+
+      <article class="region">
+        <h3>Selva misionera</h3>
+        <p>Senderos y ambientes de gran biodiversidad en el noreste argentino.</p>
+        <a target="_blank" rel="noopener"
+           href="https://www.google.com/maps/search/ecoturismo+Misiones+Argentina/">
+          Buscar propuestas en Misiones ↗
+        </a>
+      </article>
+
+      <article class="region">
+        <h3>Sierras y valles</h3>
+        <p>Buscá recorridos, reservas naturales y actividades al aire libre.</p>
+        <a target="_blank" rel="noopener"
+           href="https://www.google.com/maps/search/ecoturismo+sierras+Argentina/">
+          Buscar propuestas en las sierras ↗
+        </a>
+      </article>
+    </div>
+
+    <p class="map-note">
+      Estos enlaces abren búsquedas externas; no representan un listado
+      de emprendimientos verificados. Antes de reservar, comprobá la
+      información, las condiciones de visita y las prácticas ambientales.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <a class="logo" href="#inicio">Territorio<span> Vivo.</span></a>
+  <p>Conocer el territorio también es aprender a cuidarlo.</p>
+  <small>© <span id="year"></span> Territorio Vivo</small>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  crossorigin=""></script>
+
+<script>
+  // Menú para celulares
+  const menuButton = document.querySelector(".menu-toggle");
+  const nav = document.querySelector("nav");
+
+  menuButton.addEventListener("click", () => {
+    const open = nav.classList.toggle("open");
+    menuButton.setAttribute("aria-expanded", String(open));
+    menuButton.textContent = open ? "×" : "☰";
+  });
+
+  nav.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      nav.classList.remove("open");
+      menuButton.setAttribute("aria-expanded", "false");
+      menuButton.textContent = "☰";
+    });
+  });
+
+  document.getElementById("year").textContent =
+    new Date().getFullYear();
+
+  // BANCO DE PREGUNTAS DEL DESAFÍO AMBIENTAL (5 PREGUNTAS)
+  const quizQuestions = [
+    {
+      question: "En una caminata encontrás residuos orgánicos (como cáscaras de fruta). ¿Qué corresponde hacer?",
+      options: [
+        { text: "Tirarlos entre los arbustos porque son biodegradables.", correct: false },
+        { text: "Guardarlos y llevarlos de regreso a casa o a un contenedor urbano.", correct: true },
+        { text: "Enterrarlos en el sendero.", correct: false }
+      ],
+      feedback: "¡Exacto! Aunque sean biodegradables, las cáscaras tardan meses en degradarse, alteran la dieta de los animales silvestres y afean el paisaje."
+    },
+    {
+      question: "Durante un recorrido observás fauna silvestre cerca del camino. ¿Cómo debés actuar?",
+      options: [
+        { text: "Acercarte despacio para sacar una buena foto de cerca.", correct: false },
+        { text: "Ofrecerles alimento liviano como fruta o pan.", correct: false },
+        { text: "Mantener la distancia, hacer silencio y no alimentarlos.", correct: true }
+      ],
+      feedback: "¡Correcto! Mantener distancia evita estresar a los animales y darles comida altera su comportamiento natural y salud."
+    },
+    {
+      question: "Si querés hacer una fogata en un área natural o parque, ¿cuál es la pauta correcta?",
+      options: [
+        { text: "Encender fuego solo en fogones habilitados y apagarlo completamente con abundante agua.", correct: true },
+        { text: "Armar un círculo de piedras en cualquier lugar despejado.", correct: false },
+        { text: "Tapar las brasas con tierra seca antes de irte.", correct: false }
+      ],
+      feedback: "¡Muy bien! Utilizá solo sitios autorizados y asegurate de apagar el fuego con agua. Cubrir brasas con tierra mantiene el calor y puede reactivar incendios."
+    },
+    {
+      question: "Al caminar por senderos delimitados en una reserva natural o parque:",
+      options: [
+        { text: "Podés acortar camino fuera del sendero si está muy concurrido.", correct: false },
+        { text: "Debés mantenerte siempre dentro de la huella marcada para no erosionar el suelo ni pisar flora nativa.", correct: true },
+        { text: "Está permitido abrir nuevos atajos si hay barro.", correct: false }
+      ],
+      feedback: "¡Excelente! Salirse del camino destruye la vegetación frágil y causa erosión en los suelos."
+    },
+    {
+      question: "En relación con los ruidos y el sonido en entornos naturales:",
+      options: [
+        { text: "Llevar un parlante con música moderada no molesta a la fauna.", correct: false },
+        { text: "Evitar ruidos molestos y usar parlantes para escuchar el entorno natural.", correct: true },
+        { text: "Solo hay que hacer silencio durante la noche.", correct: false }
+      ],
+      feedback: "¡Así es! El silencio o volumen bajo permite que los animales no se asusten y que todas las personas disfruten de los sonidos de la naturaleza."
+    }
+  ];
+
+  let currentQuestionIndex = 0;
+  let scoreCount = 0;
+
+  const questionTextEl = document.getElementById("question-text");
+  const answersContainer = document.getElementById("answers-container");
+  const feedbackEl = document.getElementById("feedback");
+  const scoreEl = document.getElementById("score");
+  const progressEl = document.getElementById("quiz-progress");
+  const nextBtn = document.getElementById("next-btn");
+  const resetBtn = document.getElementById("reset");
+
+  function loadQuestion() {
+    const q = quizQuestions[currentQuestionIndex];
+    progressEl.textContent = `Pregunta ${currentQuestionIndex + 1} de ${quizQuestions.length}`;
+    scoreEl.textContent = `${scoreCount} / ${quizQuestions.length} puntos`;
+    questionTextEl.textContent = q.question;
+    feedbackEl.textContent = "Elegí una opción para ver la respuesta.";
+    nextBtn.hidden = true;
+    resetBtn.hidden = true;
+    answersContainer.innerHTML = "";
+
+    q.options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "answer";
+      btn.textContent = opt.text;
+      btn.dataset.correct = opt.correct;
+      btn.addEventListener("click", () => handleAnswerSelect(btn, q));
+      answersContainer.appendChild(btn);
+    });
+  }
+
+  function handleAnswerSelect(selectedBtn, qData) {
+    const allBtns = answersContainer.querySelectorAll(".answer");
+    const isCorrect = selectedBtn.dataset.correct === "true";
+
+    allBtns.forEach(btn => {
+      btn.disabled = true;
+      if (btn.dataset.correct === "true") {
+        btn.classList.add("right");
+      }
+    });
+
+    if (isCorrect) {
+      scoreCount++;
+      scoreEl.textContent = `${scoreCount} / ${quizQuestions.length} puntos`;
+      feedbackEl.textContent = qData.feedback;
+    } else {
+      selectedBtn.classList.add("wrong");
+      feedbackEl.textContent = "Opción incorrecta. " + qData.feedback;
+    }
+
+    if (currentQuestionIndex < quizQuestions.length - 1) {
+      nextBtn.hidden = false;
+    } else {
+      setTimeout(() => {
+        showFinalResults();
+      }, 1500);
+    }
+  }
+
+  function showFinalResults() {
+    questionTextEl.textContent = "¡Completaste el Desafío Ambiental!";
+    answersContainer.innerHTML = "";
+    progressEl.textContent = "Desafío Finalizado";
+    feedbackEl.textContent = `Obtuviste ${scoreCount} de ${quizQuestions.length} puntos. ¡Gracias por formarte como visitante responsable!`;
+    nextBtn.hidden = true;
+    resetBtn.hidden = false;
+  }
+
+  nextBtn.addEventListener("click", () => {
+    currentQuestionIndex++;
+    loadQuestion();
+  });
+
+  resetBtn.addEventListener("click", () => {
+    currentQuestionIndex = 0;
+    scoreCount = 0;
+    loadQuestion();
+  });
+
+  loadQuestion();
+
+    // ==========================================
+  // MAPA INTERACTIVO - HOTELES MAS VERDES (HMV.csv)
+  // ==========================================
+  const FALLBACK_HOTELS = [{"hotel":"1828 Smart Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Palermo","nivel":"Certificado Nivel Bronce","sitioWeb":"http://1828smarthotel.com/","direccion":"Fray Justo Sta. María de Oro 1828","telefono":"+54 9 011 2060-9011","email":"info@1828smarthotel.com"},{"hotel":"Aguasol Hotel Termal","pais":"Uruguay","provincia":"Salto","localidad":"Termas del Daymán","nivel":"Certificado Nivel Oro","sitioWeb":"https://aguasol.com.uy/","direccion":"Avda. Circunvalación S/N","telefono":"+598 99 11 22 22","email":"info@aguasol.com.uy"},{"hotel":"Águila Mora Suites \u0026 Spa","pais":"Argentina","provincia":"Río Negro","localidad":"San Carlos de Bariloche","nivel":"Certificado Nivel Plata","sitioWeb":"http://aguilamorasuites.com/","direccion":"Av. Bustillos 4790","telefono":"+54-294-4893087","email":"info@aguilamorasuites.com"},{"hotel":"Agustín I Hotel","pais":"Argentina","provincia":"Entre Ríos","localidad":"Paraná","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.agustin1apart.com.ar","direccion":"Ferré 130","telefono":"+54 9 3434162314","email":"reservas@agustin1apart.com.ar"},{"hotel":"Albatros Hotel","pais":"Argentina","provincia":"Tierra del Fuego","localidad":"Ushuaia","nivel":"Certificado Nivel Bronce","sitioWeb":"http://https//albatrosgroup.wixsite.com/albatroshotel/el-hotel","direccion":"Av. Maipu 505","telefono":"+54 02901 437300","email":"reservas@albatroshotel.com.ar"},{"hotel":"Aldea Hostel","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Bronce","sitioWeb":"https://aldeahostelcordoba.com/","direccion":"Santa Rosa 447","telefono":"+54 351 426 1312","email":"lucasgoldberg@hotmail.com"},{"hotel":"Almería","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.hotelalmeria.com.ar/","direccion":"Vicente López 146","telefono":"+54 387 5217948","email":"reservas@hotelalmeria.com.ar"},{"hotel":"Aloft by Marriott Asuncion","pais":"Paraguay","provincia":"Asunción","localidad":"Asunción","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.marriott.com/en-us/hotels/asual-aloft-asuncion/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0","direccion":"Avenida Aviadores del Chaco 1761","telefono":"+595 21-2477000","email":"reservas.asuncion@alofthotels.com"},{"hotel":"Alpre Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Carlos Paz","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.hotelalpre.com.ar/","direccion":"Av. San Martín 1081","telefono":"+54 9 3541 523065","email":"informes@hotelalpre.com.ar"},{"hotel":"Alvear Icon Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Puerto Madero","nivel":"Certificado Nivel Plata","sitioWeb":"https://alvearicon.com/","direccion":"Aimé Painé 1130","telefono":"+ 54 11 4114 0900","email":"reservationsicon@alvear.com.ar"},{"hotel":"Amaike Hotel Gold \u0026 Spa","pais":"Argentina","provincia":"Buenos Aires","localidad":"Tandil","nivel":"Certificado Nivel Plata","sitioWeb":"https://hotelamaike.com/?utm_source=Google\u0026utm_medium=My+Bussines\u0026utm_campaign=Bot%C3%B3n","direccion":"Ceferino Namuncura SN y Av. Don Bosco","telefono":"+54 9 11 40502402","email":"info@hotelamaike.com"},{"hotel":"AMAU Hotel UNLP","pais":"Argentina","provincia":"Buenos Aires","localidad":"La Plata","nivel":"Certificado Nivel Bronce","sitioWeb":"https://amau.com.ar/","direccion":"Avenida 51 Nro 692","telefono":"+54 221 445 4261","email":"info@amau.com.ar"},{"hotel":"Amerian Buenos Aires Park Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Nicolás","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.amerian.com/hotel/amerian-Buenos-Aires-Park-Hotel","direccion":"Reconquista 699","telefono":"+54 9 11 4097 9648","email":"info@amerian.com"},{"hotel":"Amerian Carlos Paz","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Carlos Paz","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.amerian.com/hotel/Amerian-Carlos-Paz-Apart-and-Suites","direccion":"Alvear 50. Villa Carlos Paz","telefono":"+54 03541 482400","email":"info@amerian.com"},{"hotel":"Amerian Córdoba Park Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.amerian.com/hotel/amerian-cordoba-park-hotel","direccion":"Bv. San Juan 165","telefono":"+54 9 3516 82-8573","email":"info@amerian.com"},{"hotel":"Amerian Executive Córdoba Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.amerian.com/hotel/amerian-executive-cordoba-hotel","direccion":"Bv. San Juan 137","telefono":"+54 9 351 2014025","email":"info@amerian.com"},{"hotel":"Amerian Portal del Iguazú","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.amerian.com/hotel/Amerian-Portal-del-Iguazu/","direccion":"Av. Tres Fronteras 780 y Av. Eduardo Arrabal","telefono":"+54 9 11 6600 6760","email":"info@amerian.com"},{"hotel":"Amérian Villa del Dique Hotel Carillo","pais":"Argentina","provincia":"Córdoba","localidad":"Villa del Dique","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.amerian.com/amerian-villa-del-dique/?utm_source=GoogleMaps\u0026utm_medium=MyBusiness","direccion":"Av. de los Navegantes 663","telefono":"+54 9 0810 810 263","email":""},{"hotel":"Andamundos Hostel","pais":"Argentina","provincia":"Córdoba","localidad":"Mina Clavero","nivel":"Certificado Nivel Bronce","sitioWeb":"https://andamundoshostel.com.ar/","direccion":"Av. San Martín 554","telefono":"+54 9 3544 52-3826","email":"andamundoshostel@gmail.com"},{"hotel":"Ankara Suites","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"http://WWW.ANKARASUITES.COM","direccion":"PASAJE BENJAMIN ZORRILLA 145","telefono":"+54 9 387 421 3969","email":"info@ankarasuites.com"},{"hotel":"Aranjuez Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Carlos Paz","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hotelaranjuez.com.ar/","direccion":"La Pampa 69","telefono":"+54 9 354175 3232","email":"hotelaranjuezariel@gmail.com"},{"hotel":"Argenta Tower Retiro Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.argenta-tower.com.ar/","direccion":"Juncal 868","telefono":"+?54 11 4325 4100","email":"reservas@argenta-tower.com.ar"},{"hotel":"Ayres de Salta Hotel","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.ayresdesalta.com.ar/","direccion":"Gral. Güemes 650","telefono":"+54 9 387 422 1616","email":"reservas@ayresdesalta.com.ar"},{"hotel":"Azur Real Hotel Boutique","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Bronce","sitioWeb":"https://azurrealhotel.com/portal/es-es/2227/Home","direccion":"San Jeronimo 243","telefono":"+54 351 3479119","email":"info@azurrealhotel.com"},{"hotel":"Balcón de la Plaza","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.balcondelaplaza.com.ar/","direccion":"España 444","telefono":"+54 387 4 214 792","email":"reservas@balcondelaplaza.com.ar"},{"hotel":"Blackstone Apart Boutique","pais":"Argentina","provincia":"Córdoba","localidad":"Villa General Belgrano","nivel":"Certificado Nivel Bronce","sitioWeb":"https://experienciablackstone.com/","direccion":"Av. San Martín 436","telefono":"+54 9 3546 53 7124","email":"reservas@experienciablackstone.com"},{"hotel":"Blackstone Country Villages","pais":"Argentina","provincia":"Córdoba","localidad":"Villa General Belgrano","nivel":"Certificado Nivel Bronce","sitioWeb":"https://experienciablackstone.com/","direccion":"Av. San Martín 4500","telefono":"+54 9 3546 53-7124","email":"reservas@experienciablackstone.com"},{"hotel":"BÖden Hotel \u0026 Spa","pais":"Argentina","provincia":"Córdoba","localidad":"Villa General Belgrano","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.bodenhotel.com","direccion":"San Martin 1070","telefono":"+54 354 646 0920","email":"reservas@bodenhotel.com"},{"hotel":"Bromelia Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Palermo","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.bromeliahotel.com.ar/","direccion":"Honduras 4742","telefono":"+54 9 11 7168 0120","email":"reservas@bromeliahotel.com.ar"},{"hotel":"Bustillo Hotel","pais":"Argentina","provincia":"Río Negro","localidad":"San Carlos de Bariloche","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.huinid.com/","direccion":"Av. Bustillo Km 2,652 Calle interna Huinid","telefono":"+54 9 294453 3411","email":"reservas@huinid.com"},{"hotel":"Cabañas Bustillo","pais":"Argentina","provincia":"Río Negro","localidad":"San Carlos de Bariloche","nivel":"Certificado Nivel Bronce","sitioWeb":"https://huinid.com/bariloche/bustillo_cabanas/","direccion":"Los Cipresales, Av. Exequiel Bustillo 2600","telefono":"+54 9 294453 3411","email":"reservas@huinid.com"},{"hotel":"Cabañas Premium Villa Tania","pais":"Argentina","provincia":"Córdoba","localidad":"Tanti","nivel":"Certificado Nivel Bronce","sitioWeb":"http://ecolodgevillatania.com","direccion":"Ruta Provincial 28 km 759.8","telefono":"+54 9  351 2283675","email":"ecolodgevillatania@gmail.com"},{"hotel":"Calafate Parque Hotel","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.calafateparquehotel.com/es/","direccion":"Gobernador Gregores, esquina 7 de Diciembre","telefono":"+549 2235 047993","email":"calafateparque@tremun.com.ar"},{"hotel":"Camino Real Plaza Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Villa del Totoral","nivel":"Certificado Nivel Bronce","sitioWeb":"https://caminorealplaza.com/","direccion":"Camino al Balneario s/n","telefono":"+54 3524 470005","email":"reservas@caminorealplaza.com"},{"hotel":"Canal Beagle Hotel","pais":"Argentina","provincia":"Tierra del Fuego","localidad":"Ushuaia","nivel":"Certificado Nivel Bronce","sitioWeb":"http://https//albatrosgroup.wixsite.com/canalbeaglehotel","direccion":"Av. Maipu 547","telefono":"+54 02901 421356","email":"reservas@canalbeaglehotel.com.ar"},{"hotel":"Carles Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Recoleta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.carleshotelbuenosaires.com/","direccion":"Juncal 798 (esquina Esmeralda)","telefono":"+54 9 11 2895 7080","email":"reservas@carleshotel.com"},{"hotel":"Casa de Uco Vineyards \u0026 Resort","pais":"Argentina","provincia":"Mendoza","localidad":"Tunuyán","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.casadeuco.com/","direccion":"Ruta 94, kilómetro 14.5 – Camino al Manzano Histórico","telefono":"0261 476 9831","email":"info@casadeuco.com"},{"hotel":"Casa Real Hotel","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.casarealsalta.com/","direccion":"Mitre 669","telefono":"+54 0387 421 2200","email":"info@casarealsalta.com"},{"hotel":"Cassa Lepage Art Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Telmo","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.cassalepage.com/","direccion":"Bolívar 373","telefono":"+54 9 11 66729000","email":"info@cassalepage.com"},{"hotel":"Chalten Suites Hotel","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Chaltén","nivel":"Certificado Nivel Oro","sitioWeb":"https://chaltensuiteshotel.com/","direccion":"Av San Martin 27","telefono":"+54 9 2966 499748","email":"info@chaltensuiteshotel.com"},{"hotel":"City Falls Iguazú","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.marriott.com/es/hotels/igrxe-city-falls-iguazu/overview/","direccion":"Yapeyú 88","telefono":"+54 9 3757300555","email":"info@amerian.com"},{"hotel":"Correntoso Lake \u0026 River Hotel","pais":"Argentina","provincia":"Neuquén","localidad":"Villa La Angostura","nivel":"Certificado Nivel Plata","sitioWeb":"https://correntoso.com/","direccion":"AV SIETE LAGOS 4505","telefono":"+54 9 294461 9728","email":"INFO@CORRENTOSO.COM"},{"hotel":"Del Vino Hotel Boutique","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"http://WWW.HOTELDELVINOSALTA.COM.AR","direccion":"AMEGHINO 555","telefono":"+54 9 0387 432 0092","email":"hotel@delvinosalta.com.ar"},{"hotel":"Design Suites Salta","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.designsuites.com/salta.php","direccion":"Pje. M. Castro 215","telefono":"+54 9 11 4896-6340","email":"recepcion-sla@designsuites.com"},{"hotel":"Destino Sur Hotel \u0026 Spa de Montaña","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Chaltén","nivel":"Certificado Nivel Plata","sitioWeb":"https://hoteldestinosur.com/web/es/","direccion":"Lionel Terray 370","telefono":"+54 9 2966 48-9833","email":"info@hoteldestinosur.com"},{"hotel":"Diplomatic Hotel","pais":"Argentina","provincia":"Mendoza","localidad":"Mendoza","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.diplomatichotel.com.ar/?cur=USD","direccion":"Av. Belgrano 1041","telefono":"+54 9 0261 2756818","email":""},{"hotel":"Domingo Design Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Santa Rosa de Calamuchita","nivel":"Certificado Nivel Bronce","sitioWeb":"https://complejovalledelsol.com/hotel-domingo/","direccion":"Ruta Provincial 5, Km 93,5","telefono":"+54 9 3546 543983","email":"info@complejovalledelsol.com"},{"hotel":"El Conquistador Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Plata","sitioWeb":"http://elconquistador.com.ar/","direccion":"Suipacha 948","telefono":"+54 11 4328 3012","email":"reservas@elconquistador.com.ar"},{"hotel":"El Cortijo Hotel Boutique","pais":"Argentina","provincia":"Salta","localidad":"Cachi","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.elcortijohotel.com/","direccion":"Avda Automovil Club s/n","telefono":"+54 9 387 587-8513","email":"reservas@elcortijohotel.com"},{"hotel":"El Descubrimiento Resort Club","pais":"Uruguay","provincia":"Canelones","localidad":"Guazuvirá","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.eldescubrimiento.com/","direccion":"Ruta Interbalnearia Km. 59.800","telefono":"+598 4378 2141","email":"info@eldescubrimiento.com"},{"hotel":"El Potrerillo de Larreta","pais":"Argentina","provincia":"Córdoba","localidad":"Alta Gracia","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hotelelpotrerillodelarreta.com/habitaciones","direccion":"Camino Los Paredones Km 3 Casilla de Correo 195","telefono":"+54 9 3547 447630","email":"contacto@hotelelpotrerillodelarreta.com"},{"hotel":"El Pueblito Iguazú","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://elpueblitoiguazu.com/","direccion":"Ruta Nac. 12. Km. 3","telefono":"+54 9 375744 9138","email":"reservas@elpueblitoiguazu.com"},{"hotel":"El Reposo del Diablo","pais":"Argentina","provincia":"Jujuy","localidad":"Tilcara","nivel":"Certificado Nivel Plata","sitioWeb":"https://reposodeldiablo.com/","direccion":"Alverro 1049","telefono":"+54 9 0388 495 5907","email":"elreposodeldiablo@gmail.com"},{"hotel":"Enjoy Punta del Este","pais":"Uruguay","provincia":"Maldonado","localidad":"Punta del Este","nivel":"Certificado Nivel Bronce","sitioWeb":"https://enjoypuntadeleste.uy/","direccion":"Rambla C. Williman Parada 4","telefono":"+598 4249 1111","email":"guest.res@enjoy.cl"},{"hotel":"Entre Acequias","pais":"Argentina","provincia":"Mendoza","localidad":"General Alvear","nivel":"Certificado Nivel Bronce","sitioWeb":"https://entreacequias.com/","direccion":"Ruta 188, a 500mts de calle 10v General Alvear","telefono":"+54 9 2625 45-6825","email":"entreacequias@gmail.com"},{"hotel":"Entre Cielos | Wine \u0026 Wellness Hotel","pais":"Argentina","provincia":"Mendoza","localidad":"Luján de Cuyo","nivel":"Certificado Nivel Plata","sitioWeb":"https://entrecielos.com/es/hotel-boutique-spa-hamam-en-mendoza-inicio-es/","direccion":"Guardia Vieja 1998","telefono":"+54 9 261 554 6695","email":"reservas@entrecielos.com"},{"hotel":"Establecimiento La Angelica","pais":"Argentina","provincia":"Entre Ríos","localidad":"Concordia","nivel":"Certificado Nivel Bronce","sitioWeb":"https://establecimientolangelica.com/home","direccion":"RN A015 km 10,5","telefono":"+54 0345 4055364","email":"establecimientolangelica@gmail.com"},{"hotel":"Estancia El Colibrí","pais":"Argentina","provincia":"Córdoba","localidad":"Santa Catalina","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.estanciaelcolibri.com/","direccion":"Camino a Santa Catalina Km7","telefono":"+54 3525 465 888","email":"info@estanciaelcolibri.com"},{"hotel":"Estancia La Paz","pais":"Argentina","provincia":"Córdoba","localidad":"Ascochinga","nivel":"Certificado Nivel Bronce","sitioWeb":"https://puebloestancialapaz.com/","direccion":"Ruta E 66 – Km 41","telefono":"+54 9 3512 72-7867","email":"hotel@puebloestancialapaz.com"},{"hotel":"Faena Hotel Buenos Aires","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Puerto Madero","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.faena.com/buenos-aires?utm_source=google-gmb\u0026utm_medium=organic\u0026utm_campaign=gmb","direccion":"Martha Salotti 445","telefono":"+54 11 4010 9070","email":"spa@faenahotels.com"},{"hotel":"Fazenda Solares","pais":"Argentina","provincia":"Córdoba","localidad":"San Antonio de Arredondo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://fazendasolares.com.ar/","direccion":"Teniente Arraras 223","telefono":"+54 9 351 5609705","email":"fazendasolares@gmail.com"},{"hotel":"Four Seasons Hotel Buenos Aires","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.fourseasons.com/es/buenosaires/","direccion":"Posadas 1086","telefono":"+54 (11) 4321-1200","email":""},{"hotel":"Gran Hotel Panamericano","pais":"Argentina","provincia":"Río Negro","localidad":"San Carlos de Bariloche","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.ghpanamericano.com/","direccion":"Av. Exequiel Bustillo 22900","telefono":"+54 9 2235 99-0380","email":"reservas.bariloche@tremunhoteles.com.ar"},{"hotel":"Gran Hotel Presidente","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Plata","sitioWeb":"http://www.granhotelpresidente.com/","direccion":"Av. Belgrano 353","telefono":"+54 9 387 5101254","email":"reservas@granhotelpresidente.com"},{"hotel":"Gran Meliá Iguazú","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.melia.com/en/hotels/argentina/iguazu-national-park/gran-melia-iguazu?utm_medium=organic\u0026utm_source=uberall\u0026utm_content=dynamic","direccion":"Iguazu National Park","telefono":"+54 37 5749 1800","email":"granmelia.iguazu@melia.com"},{"hotel":"Guaminí Misión Hotel","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Bronce","sitioWeb":"http://WWW.HOTELGUAMINI.COM.AR","direccion":"AV. RÍO PARANÁ Y PALO ROSA","telefono":"+54 9 375757 6521","email":"GUAMINIMISION@GMAIL.COM"},{"hotel":"Hampton by Hilton Bariloche","pais":"Argentina","provincia":"Río Negro","localidad":"San Carlos de Bariloche","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.promo-hamptonbariloche.com/","direccion":"LIBERTAD 290","telefono":"+54 0294 474 6200","email":""},{"hotel":"Hathor Hotels Concordia","pais":"Argentina","provincia":"Entre Ríos","localidad":"Concordia","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hathorconcordia.com.ar/","direccion":"RUTA NAC. 14 KM 264.5","telefono":"+54 345 422 2362","email":"reservasconcordia@hathorhotels.com.ar"},{"hotel":"Hilton Garden Inn Montevideo","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hilton.com/en/hotels/mvdmvgi-hilton-garden-inn-montevideo/?SEO_id=GMB-AMER-GI-MVDMVGI\u0026y_source=1_MTIxNjk1NTgtNzE1LWxvY2F0aW9uLndlYnNpdGU%3D","direccion":"Av. Dr. Luis Bonavita Montevideo Shopping","telefono":"+598 2623 8000","email":"mvdmv_res@hilton.com"},{"hotel":"Hilton Mendoza","pais":"Argentina","provincia":"Mendoza","localidad":"Mendoza","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.hotelcasinocondor.com.ar/","direccion":"Boulevard Perez Cuesta esq Lateral Norte Acceso Este Villa Nueva","telefono":"+54 261 521-8800","email":"reservas@klpemprendimientos.com.ar"},{"hotel":"Holiday Inn Express Asunción","pais":"Paraguay","provincia":"Asunción","localidad":"Asunción","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.ihg.com/holidayinnexpress/hotels/us/en/asuncion/asuaa/hoteldetail?cm_mmc=GoogleMaps-_-EX-_-PY-_-ASUAA","direccion":"Avenida Aviadores del Chaco 2935","telefono":"+595 21 6579000","email":"hiexasuncion@hiexasuncion.com"},{"hotel":"Hostería \u0026 Spa de la Cascada","pais":"Argentina","provincia":"Buenos Aires","localidad":"Tandil","nivel":"Certificado Nivel Plata","sitioWeb":"https://hosteriadelacascada.com.ar/","direccion":"Int. Leeson 2190","telefono":"+54 9 249424 7086","email":"info@hosteriadelacascada.com.ar"},{"hotel":"Hostería Cruz del Sur","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Carlos Paz","nivel":"Certificado Nivel Bronce","sitioWeb":"https://hosteriacruzdelsur.com.ar/","direccion":"Martín Fierro 91","telefono":"+54 9 3541-430682","email":"hosteriacruzdelsurcarlospaz@gmail.com"},{"hotel":"Hotel Altos del Iguazú","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.altosdeliguazuhotel.com/","direccion":"Av. Papa Francisco N° 100","telefono":"+ 54 3757 15 416964","email":"info@altosdeliguazuhotel.com"},{"hotel":"Hotel Cap Polonio","pais":"Argentina","provincia":"Tierra del Fuego","localidad":"Ushuaia","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.hotelesmasverdes.com/hotel-cap-polonio/www.hotelcappolonio.com.ar","direccion":"Av. San Martín 746","telefono":"+54 2901 42 2140","email":"info@hotelcappolonio.com.ar"},{"hotel":"Hotel Caseros","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Oro","sitioWeb":"https://hotelcaseros.com/","direccion":"Caseros 230","telefono":"+549 3873031425","email":"reservas@hotelcaseros.com"},{"hotel":"Hotel Casino Magic","pais":"Argentina","provincia":"Neuquén","localidad":"Neuquén","nivel":"Certificado Nivel Oro","sitioWeb":"https://casinomagic.com.ar/","direccion":"Teodoro Planas 4005","telefono":"+54 9 299 15 332 4660","email":"reservashotel@casinomagic.com.ar"},{"hotel":"Hotel Costanero MGallery","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://all.accor.com/hotel/B3G3/index.es.shtml?goto=fiche_hotel\u0026code_hotel=B3G3\u0026merchantid=seo-maps-UY-B3G3\u0026sourceid=aw-cen\u0026utm_medium=seo%20maps\u0026utm_source=google%20Maps\u0026utm_campaign=seo%20maps","direccion":"Rambla Republica del Peru 1371","telefono":"+598 2706 8607","email":"reservas.mgallerymontevideo@accor.com"},{"hotel":"Hotel de las Nubes","pais":"Argentina","provincia":"Salta","localidad":"San Antonio de los Cobres","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hoteldelasnubes.com/?cur=ARS","direccion":"Rta Nac 51 Km 163","telefono":"+54 9 387 442 3536","email":"reservas@hoteldelasnubes.com"},{"hotel":"Hotel del Chocon","pais":"Argentina","provincia":"Neuquén","localidad":"Villa El Chocón","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hoteldelchocon.com/","direccion":"Ruta nacional 237 – KM. 1298","telefono":"+54 9 0299 154219678","email":""},{"hotel":"Hotel Genovés","pais":"Uruguay","provincia":"Maldonado","localidad":"Piriápolis","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.hotelgenoves.com.uy/","direccion":"Rambla de los Argentinos 1050","telefono":"+443 22505","email":"info@hotelgenoves.com.uy"},{"hotel":"Hotel Grace Cafayate","pais":"Argentina","provincia":"Salta","localidad":"Cafayate","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.graceargentina.com.ar","direccion":"RUTA 40 KM 4340","telefono":"+54 9 038 6842 7000","email":"info.cafayate@graceargentina.com.ar"},{"hotel":"Hotel Holiday Inn Montevideo by IHG","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.ihg.com/holidayinn/hotels/us/en/montevideo/mvduy/hoteldetail?cm_mmc=GoogleMaps-_-HI-_-UY-_-MVDUY","direccion":"Colonia Nº 823","telefono":"598 2 9020001","email":"reservas@himontevideo.com.uy"},{"hotel":"Hotel Huacalera","pais":"Argentina","provincia":"Jujuy","localidad":"Huacalera","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hotelhuacalera.com/","direccion":"Ruta 9, Km 1790","telefono":"+54 9 388 5813 417","email":"reservas@hotelhuacalera.com"},{"hotel":"Hotel Iruya","pais":"Argentina","provincia":"Salta","localidad":"Iruya","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hoteliruya.com/","direccion":"Gral. San Martín 641","telefono":"+54 9 387 442 3536","email":"reservas@hoteliruya.com"},{"hotel":"Hotel La Candela","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hotellacandela.com.ar/","direccion":"Pueyrredón 346","telefono":"+54 387 4210254","email":"reservas@hotellacandela.com.ar"},{"hotel":"Hotel Lago Los Molinos","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Ciudad de América","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.hotellagolosmolinos.com.ar","direccion":"Ruta 5 km54","telefono":"+54 9 354 730 1967","email":"hotellagolosmolinos@gmail.com"},{"hotel":"Hotel Las Vegas","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"","direccion":"Ituzaingó 84","telefono":"+54 9 0387 421 7420","email":""},{"hotel":"Hotel Los Yamanas","pais":"Argentina","provincia":"Tierra del Fuego","localidad":"Ushuaia","nivel":"Certificado Nivel Bronce","sitioWeb":"https://hotelyamanas.com.ar/","direccion":"Costa de los Yámanas 2850","telefono":"+54 9 2901 41-0797","email":"RESERVAS@HOTELYAMANAS.COM.AR"},{"hotel":"Hotel Luz y Fuerza Villa Giardino","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Giardino","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.cumbreturismo.com.ar/","direccion":"Altos de los Bustos 100","telefono":"+54 9 354840 6802","email":"recepcion@cumbreturismo.com.ar"},{"hotel":"Hotel Madero","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Puerto Madero","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.hotelmadero.com","direccion":"Rosario Vera Peñaloza 360","telefono":"+54 9 011 5776 7777","email":"info@hotelmadero.com"},{"hotel":"Hotel Pinares del Cerro","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Carlos Paz","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.pinaresdelcerro.com.ar/","direccion":"Roque Saenz Peña 1300","telefono":"+54 3541 433469","email":""},{"hotel":"Hotel Posada los Álamos","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://posadalosalamos.com/","direccion":"Ing. Hector Mario Guatti 1135","telefono":"+54 0 2902 491 144","email":"info@posadalosalamos.com"},{"hotel":"Hotel Saint George","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.hotelsaintgeorge.com/?cur=USD","direccion":"Av. Córdoba 148","telefono":"+54 9 3757 45 6510","email":"info@hotelsaintgeorge.com"},{"hotel":"Hotel Salta","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hotelsalta.com/","direccion":"Buenos Aires 1","telefono":"+54 (387) 4310740","email":"reservas@hotelsalta.com"},{"hotel":"Hotel Sierra Nevada","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://sierranevada.com.ar/","direccion":"Av. del Libertador 1888","telefono":"54 9 296 64 19455","email":"reservas@sierranevada.com.ar"},{"hotel":"Hotel Termas","pais":"Argentina","provincia":"Salta","localidad":"Rosario de la Frontera","nivel":"Certificado Nivel Bronce","sitioWeb":"https://hoteltermas.com.ar/portal/es-es/2454/Home","direccion":"Ruta 34 s/n","telefono":"+54 0387572 8101","email":"reservas@hoteltermas.com.ar"},{"hotel":"Hotel Uthgra los Cocos","pais":"Argentina","provincia":"Córdoba","localidad":"Los Cocos","nivel":"Certificado Nivel Oro","sitioWeb":"http://www.uthgraturismo.com.ar/?accommodation=uthgra-los-cocos","direccion":"Av. Cecilia Grierson 1975","telefono":"+54 9 11 2351 5996","email":"turismo@uthgra.org.ar"},{"hotel":"Hotel Uthgra Presidente Perón","pais":"Argentina","provincia":"Buenos Aires","localidad":"Mar del Plata","nivel":"Certificado Nivel Oro","sitioWeb":"http://www.uthgramardelplata.com.ar/","direccion":"Tucumán 2662","telefono":"+54 9 0223 495-1689","email":"info@uthgramardelplata.com.ar"},{"hotel":"Hotel Uthgra Sasso","pais":"Argentina","provincia":"Buenos Aires","localidad":"Mar del Plata","nivel":"Certificado Nivel Oro","sitioWeb":"http://www.uthgrasasso.com.ar/","direccion":"Av. de los Trabajadores 3545","telefono":"+54 9 0223 499-9000","email":"reservas@uthgrasasso.com.ar"},{"hotel":"Hotel Yene Hue","pais":"Argentina","provincia":"Chubut","localidad":"Puerto Madryn","nivel":"Certificado Nivel Bronce","sitioWeb":"https://australisyenehue.com.ar/portal/es-es/77/Home_","direccion":"Av. Julio Argentino Roca 33","telefono":"+54 11 4322-3888","email":"coordinadoryenehue@hotelesaustralis.com.ar"},{"hotel":"Howard Johnson Ciudad del Este","pais":"Paraguay","provincia":"Alto Paraná","localidad":"Ciudad del Este","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.wyndhamhotels.com/es-xl/hojo/ciudad-del-este-paraguay/howard-johnson-ciudad-del-este/overview?CID=LC:q68ryvg9cq3avi8:50842\u0026iata=00093796","direccion":"Av Adrián Jara 9050","telefono":"+595 61 502 351","email":"comercial@hjcde.com.py"},{"hotel":"Howard Johnson la Cañada Hotel \u0026 Suites","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.howardjohnsoncordoba.com/","direccion":"Av. Figueroa Alcorta 20","telefono":"+54 9 11 2277 4656","email":"reservas@hojoar.com"},{"hotel":"Howard Johnson Plaza Jujuy","pais":"Argentina","provincia":"Jujuy","localidad":"San Salvador de Jujuy","nivel":"Certificado Nivel Plata","sitioWeb":"https://hjjujuy.com.ar/","direccion":"Gral. Güemes Nº 864","telefono":"+54 388 424 9800","email":"reservas@hjjujuy.com.ar"},{"hotel":"Howard Johnson Yerba Buena","pais":"Argentina","provincia":"Tucumán","localidad":"Yerba Buena","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.hjyerbabuena.com/","direccion":"Av. Aconquija 1136","telefono":"+54 381 4257796","email":"reservas@hjyerbabuena.com.ar"},{"hotel":"Huentala Hotel Boutique","pais":"Argentina","provincia":"Mendoza","localidad":"Mendoza","nivel":"Certificado Nivel Bronce","sitioWeb":"https://huentala.com/","direccion":"Primitivo de la Reta 1007","telefono":"+54 9 261 420 0766","email":"reservas@huentala.com"},{"hotel":"Huinid Obelisco Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Monserrat","nivel":"Certificado Nivel Bronce","sitioWeb":"https://huinid.com/buenos_aires/obelisco_hotel/","direccion":"Sarmiento 1431","telefono":"+54 9 2944533411","email":""},{"hotel":"Hyatt Centric Montevideo","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.hyatt.com/hyatt-centric/mvdhy-hyatt-centric-montevideo?src=corp_lclb_google_seo_mvdhy\u0026%3Futm_source=google\u0026utm_medium=organic\u0026utm_campaign=lmr","direccion":"Rambla República del Perú 1479","telefono":"+598 2621 1230","email":"montevideo.centric@hyatt.com"},{"hotel":"Ibis Asunción","pais":"Paraguay","provincia":"Asunción","localidad":"Asunción","nivel":"Certificado Nivel Bronce","sitioWeb":"https://all.accor.com/hotel/7324/index.es.shtml?utm_campaign=seo+maps\u0026utm_medium=seo+maps\u0026utm_source=google+Maps","direccion":"Aviadores Del Chaco 2060","telefono":"+595 21 620 1000","email":"h7324-re@accor.com"},{"hotel":"ibis Buenos Aires Obelisco Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Nicolás","nivel":"Certificado Nivel Bronce","sitioWeb":"https://all.accor.com/sudamerica/index.es.shtml","direccion":"Av. Corrientes 1344 Esq. Talcahuano","telefono":"+54 9 011 4370-9300","email":"h6502-re@accor.com"},{"hotel":"ibis Congreso","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Congreso","nivel":"Certificado Nivel Bronce","sitioWeb":"https://all.accor.com/hotel/3251/index.es.shtml?utm_campaign=seo+maps\u0026utm_medium=seo+maps\u0026utm_source=google+Maps","direccion":"Hipolito Yrigoyen 1592","telefono":"+54 11 5300 5555","email":"h3251@accor.com"},{"hotel":"ibis Mendoza","pais":"Argentina","provincia":"Mendoza","localidad":"Guaymallén","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.ibis.com","direccion":"Guaymallen, Lateral Sur, Acceso Este 4241","telefono":"+54 9 0261 426 4600","email":""},{"hotel":"Iguazu Grand Hotel Resort \u0026 Casino","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.iguazugrand.com/","direccion":"Ruta 12 Km 1640","telefono":"+54-9-3757-44-3973","email":"reserveigr@grand-hotels-lux.com"},{"hotel":"Iguazú Jungle Lodge","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.iguazujunglelodge.com/","direccion":"Av. Hipólito Irigoyen s/n","telefono":"+ 54 9 3757 522576","email":"info@iguazujunglelodge.com"},{"hotel":"Iguazú Urban Hotel Express","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.iguazuurbanhotel.com/","direccion":"Fray Luis Beltran 290","telefono":"+54 3757 458904","email":"iguazuurbanhotel@gmail.com"},{"hotel":"Imago Hotel \u0026 Spa","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Plata","sitioWeb":"https://imagohotelspa.com/","direccion":"Calle 669, N° 40","telefono":"+54 2902 49 6501","email":"reservas@imagohotelspa.com"},{"hotel":"Intercontinental Buenos Aires","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Monserrat","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.ihg.com/intercontinental/hotels/us/en/buenos-aires/bueha/hoteldetail?cm_mmc=GoogleMaps-_-IC-_-AR-_-BUEHA","direccion":"Moreno 809","telefono":"+54 11 4340 7100","email":"bueha.reservas@ihg.com"},{"hotel":"Iraola Hotel Boutique","pais":"Argentina","provincia":"Salta","localidad":"Cafayate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://iraolahotel.ar/portal/es-es/2603/Home","direccion":"M.Hurtado 128","telefono":"+54 9 386840 8444","email":"reservas@iraolahotel.ar"},{"hotel":"Kau Yatun Hotel de Campo","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.kauyatun.com/","direccion":"Estancia 25 de Mayo","telefono":"+ 54 9 223 602 4796","email":"kauyatun@tremun.com.ar"},{"hotel":"Kosten Aike","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.kostenaike.com.ar/","direccion":"Gdor. Moyano 1243","telefono":"+54 2902 49-2424","email":"reservas@kostenaike.com.ar"},{"hotel":"La Aldea de la Selva Lodge","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.laaldeadelaselva.com/?cur=USD","direccion":"El Dorado s/n","telefono":"+54 9 375749 3010","email":"info@laaldeadelaselva.com"},{"hotel":"La Merced del Alto","pais":"Argentina","provincia":"Salta","localidad":"Cachi","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.lamerceddelalto.com/","direccion":"Fuerte Alto s/n Banda Norte","telefono":"+54 9387 411791","email":"reservas@lamerceddelalto.com"},{"hotel":"La Wet Residencias","pais":"Argentina","provincia":"Salta","localidad":"Tartagal","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.facebook.com/lawetr/","direccion":"Ruta 34 km 1437","telefono":"03873 15-51-3559","email":"reservas@residenciaslawet.com.ar"},{"hotel":"Las Hayas Resort Hotel","pais":"Argentina","provincia":"Tierra del Fuego","localidad":"Ushuaia","nivel":"Certificado Nivel Plata","sitioWeb":"http://www.lashayas.com.ar/","direccion":"Luis F. Martial 1650","telefono":"+54 9 223 602  4789","email":"lashayas@tremun.com.ar"},{"hotel":"Legado Mítico Salta","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://legadomitico.com/salta/","direccion":"Mitre 647","telefono":"+54 387 422 8786","email":"reservassalta@legadomitico.com"},{"hotel":"Libertador Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.libertadorhotels.com/","direccion":"Avenida Cordoba 690","telefono":"+54 9 11 4449-0526","email":"reservas@libertadorhotels.com"},{"hotel":"Loi Suites Iguazú","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.loisuites.com.ar/es/hotel/loi-suites-iguaz%C3%BA-hotel?gclid=CjwKCAjwh4ObBhAzEiwAHzZYU1ydJ22kIJUNGnSopqBix4YxLU83V9m0OGQNP_2Z-X6nr5x5GP-uwhoCw1gQAvD_BwE","direccion":"Selva Iryapú s/n","telefono":"+54 9 11 6149-7697","email":"reservas4@loisuites.com.ar"},{"hotel":"Loi Suites Recoleta","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Recoleta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://loisuites.com.ar/recoleta.html","direccion":"Vicente López 1955","telefono":"+54 11 5777 8950","email":"reservas@loisuites.com.ar"},{"hotel":"Los Acebos Ushuaia","pais":"Argentina","provincia":"Tierra del Fuego","localidad":"Ushuaia","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.losacebos.com.ar/","direccion":"Luis F. Martial 1911","telefono":"+54 9 223 602 4789","email":"losacebos@tremun.com.ar"},{"hotel":"Los Cauquenes Resort \u0026 Spa","pais":"Argentina","provincia":"Tierra del Fuego","localidad":"Ushuaia","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.loscauquenes.com/es/hotel-spa/","direccion":"De la Ermita 3462","telefono":"+54 9 11 6515 4946","email":"reservas@loscauquenes.com"},{"hotel":"Los Colorados Cabañas","pais":"Argentina","provincia":"Jujuy","localidad":"Purmamarca","nivel":"Certificado Nivel Bronce","sitioWeb":"http://www.loscoloradosjujuy.com.ar","direccion":"Chapacal 512 Paseo los colorados","telefono":"0388-4908182","email":"info@loscoloradosjujuy.com.ar"},{"hotel":"Los Lagos Resort Hotel","pais":"Paraguay","provincia":"Central","localidad":"Capiatá","nivel":"Certificado Nivel Bronce","sitioWeb":"https://loslagos.com.py/","direccion":"Paseo Los Lagos c/ Pedro López","telefono":"+595 983 523469","email":"info@loslagos.com.py"},{"hotel":"Los Ñires Ushuaia","pais":"Argentina","provincia":"Tierra del Fuego","localidad":"Ushuaia","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.losnires.com/es/","direccion":"Av. De los Ñires 3040","telefono":"+54 9 2901 446173","email":"reservas@losnires.com"},{"hotel":"Los Pinos Resort \u0026 Spa Termal","pais":"Argentina","provincia":"Santiago del Estero","localidad":"Villa Río Hondo","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.lospinos.com.ar/portal/es-es/1/inicioLosPinos","direccion":"Maipú 201","telefono":"+ 54 (0223) 601-4425","email":"reservas@lospinos.com.ar"},{"hotel":"MAE Singular Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Bronce","sitioWeb":"https://maehotel.com.ar/portal/es-es/1720/Servicios","direccion":"José Luis Lagrange 5733","telefono":"+54 9 351 864-8888","email":"reservas@maehotel.com.ar"},{"hotel":"Manzano Resort","pais":"Argentina","provincia":"Neuquén","localidad":"Villa La Angostura","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.bahiamanzano.com/","direccion":"Aljaba 205","telefono":"+54 294441 1992","email":"club@bahiamanzano.com"},{"hotel":"Maran Suites \u0026 Towers","pais":"Argentina","provincia":"Entre Ríos","localidad":"Paraná","nivel":"Certificado Nivel Plata","sitioWeb":"https://maran.com.ar/","direccion":"Alameda de la Federación y Mitre","telefono":"+54 0343 5038070","email":"reservas@maran.com.ar"},{"hotel":"Mercure Iguazú Hotel Iru","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://all.accor.com/hotel/8431/index.es.shtml?utm_campaign=seo+maps\u0026utm_medium=seo+maps\u0026utm_source=google+Maps","direccion":"Selva Iryapu S N, Predio 600 Has","telefono":"+54 3757 49-3300","email":"h8431-re@accor.com"},{"hotel":"Mirador del Lago","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.miradordellago.com.ar/","direccion":"Av. del Libertador 2047","telefono":"+54 9 223 602 4796","email":"miradordellago@tremun.com.ar"},{"hotel":"Miradores del Bosque","pais":"Argentina","provincia":"Buenos Aires","localidad":"Mar de las Pampas","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.miradoresdelbosque.com/?cur=ARS","direccion":"Mercedes Sosa (ex Roca) esq. HUDSON","telefono":"+54 9 2255 425197","email":"info@miradoresdelbosque.com"},{"hotel":"Montaña Resort","pais":"Argentina","provincia":"Neuquén","localidad":"Villa La Angostura","nivel":"Certificado Nivel Plata","sitioWeb":"http://www.bahiamanzano.com","direccion":"Av. Arrayanes 8025","telefono":"+54 9 0294 447 5264","email":"club@bahiamontana.com"},{"hotel":"Mulen Hotel Tandil","pais":"Argentina","provincia":"Buenos Aires","localidad":"Tandil","nivel":"Certificado Nivel Plata","sitioWeb":"https://mulentandil.com/?utm_source=Google\u0026utm_medium=My+Bussines\u0026utm_campaign=Bot%C3%B3n","direccion":"Av. Santamarina 380","telefono":"+54 9 249463 9751","email":"reservas@mulentandil.com"},{"hotel":"NH Bariloche Edelweiss","pais":"Argentina","provincia":"Río Negro","localidad":"San Carlos de Bariloche","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.nh-hoteles.es/hotel/nh-bariloche-edelweiss?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb\u0026utm_term=langtest","direccion":"San Martin 202","telefono":"+54 294 4445500","email":"rsvt.nhedelweiss@nh-hotels.com"},{"hotel":"NH Buenos Aires 9 de Julio","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Monserrat","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.nh-hoteles.es/hotel/nh-buenos-aires-9-de-julio?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb\u0026utm_term=langtest","direccion":"Av. Cerrito 154","telefono":"+54 11 6841 9176","email":"nh9dejulio@nh-hotels.com"},{"hotel":"NH Buenos Aires City","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Telmo","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.nh-hotels.com/en/hotel/nh-buenos-aires-city?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb","direccion":"Bolivar 160","telefono":"+54 11 4121 6464","email":"nhcity@nh-hotels.com"},{"hotel":"NH Buenos Aires Florida","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.nh-hoteles.es/hotel/nh-buenos-aires-florida?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb\u0026utm_term=langtest","direccion":"San Martín 839","telefono":"+54 11 43219850","email":"nhflorida@nh-hotels.com"},{"hotel":"NH Buenos Aires Latino","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Nicolás","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.nh-hotels.com/en/hotel/nh-buenos-aires-latino?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb","direccion":"Suipacha 309","telefono":"+54 9 4321 6700","email":"nhlatino@nh-hotels.com"},{"hotel":"NH Buenos Aires Tango","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Nicolás","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.nh-hoteles.es/hotel/nh-buenos-aires-tango?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb\u0026utm_term=langtest","direccion":"Cerrito 550","telefono":"+5411 4124 6700","email":"nhtango@nh-hotels.com"},{"hotel":"NH Collection Buenos Aires Centro Histórico","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Telmo","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.nh-collection.com/es/hotel/nh-collection-buenos-aires-centro-historico?campid=8435708\u0026gclid=CjwKCAjwu4WoBhBkEiwAojNdXssqCOKEn7ST7Hcie7e-SZFZSk1tJ1rMtfm2cNV8bvuXGnn11GB5jhoCr04QAvD_BwE\u0026gclsrc=aw.ds","direccion":"Bolivar 120","telefono":"+54 11 4121 6446","email":"nhcollectioncentrohistorico@nh-hotels.com"},{"hotel":"NH Collection Buenos Aires Crillón","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.nh-hotels.com/en/hotel/nh-collection-buenos-aires-crillon?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb","direccion":"Av. Sta. Fe 796","telefono":"+54 9 11 4310 2000","email":"nhcollectioncrillon@nh-hotels.com"},{"hotel":"NH Collection Buenos Aires Jousten","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Nicolás","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.nh-hoteles.es/hotel/nh-collection-buenos-aires-jousten?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb\u0026utm_term=langtest","direccion":"Av. Corrientes 280","telefono":"+54 11 43216750","email":"nhcollectionjousten@nh-hotels.com"},{"hotel":"NH Collection Buenos Aires Lancaster","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.nh-hoteles.es/hotel/nh-collection-buenos-aires-lancaster?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb\u0026utm_term=langtest","direccion":"Av. Córdoba","telefono":"+54 9 11 4131 6464","email":"nhcollectionlancaster@nh-hotels.com"},{"hotel":"NH Córdoba Panorama","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.nh-hoteles.es/hotel/nh-cordoba-panorama?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb\u0026utm_term=langtest","direccion":"Marcelo T. de Alvear 251","telefono":"+54 35 14103900","email":"nhpanorama@nh-hotels.com"},{"hotel":"NH Córdoba Urbano","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.nh-hotels.com/en/hotel/nh-cordoba-urbano?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb","direccion":"Marcelo T. de Alvear 63","telefono":"+54 11 68419937","email":"nhurbano@nh-hotels.com"},{"hotel":"NH Mendoza Cordillera","pais":"Argentina","provincia":"Mendoza","localidad":"Mendoza","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.nh-hotels.com/en/hotel/nh-mendoza-cordillera?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb","direccion":"Av. España 1324","telefono":"+54 26 14416464","email":"rsvt.nhmendozacordillera@nh-hotels.com"},{"hotel":"NH Montevideo Columbia","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.nh-hotels.com/en/hotel/nh-montevideo-columbia?utm_campaign=local-gmb\u0026utm_medium=organic_search\u0026utm_source=google_gmb","direccion":"Reconquista 470","telefono":"+54 11 68419937","email":"nhmontevideocolumbia@nh-hotels.com"},{"hotel":"Novotel Buenos Aires","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Nicolás","nivel":"Certificado Nivel Bronce","sitioWeb":"https://all.accor.com/sudamerica/index.es.shtml","direccion":"Av. Corrientes 1334","telefono":"+54 9 011 4370-9500","email":"h6503-re@accor.com"},{"hotel":"Ñanderetá Lodge","pais":"Argentina","provincia":"Corrientes","localidad":"Colonia Carlos Pellegrini","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.nandereta.com/","direccion":"Guasú Virá","telefono":"+54 9 11 6852 7885","email":"reservas@nandereta.com"},{"hotel":"O2 Hotel Iguazú","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.o2hoteliguazu.com/","direccion":"Paraguay 546","telefono":"+54 9 11 2514-0542","email":"reservas1@grupodotia.com"},{"hotel":"Palacio Duhau - Park Hyatt Buenos Aires","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Plata","sitioWeb":"https://buenosaires.park.hyatt.com","direccion":"Avenida Alvear 1661","telefono":"+54 9 011 5171 1234","email":"buenosaires.park@hyatt.com"},{"hotel":"Palladio Hotel Buenos Aires - MGallery Collection","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Recoleta","nivel":"Certificado Nivel Oro","sitioWeb":"http://www.palladiohotelbuenosaires.com","direccion":"Av. Callao 924","telefono":"+54 9 011 4700 7500","email":"reservas.palladio@accor.com"},{"hotel":"Panoramic Grand Hotel","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.panoramicgrand.com/","direccion":"Cordoba y Felix de Azara 3370","telefono":"+54 9 3757 61-6765","email":"reserveigr@grand-hotels-lux.com"},{"hotel":"Park Hyatt Mendoza - Hotel, Casino \u0026 Spa","pais":"Argentina","provincia":"Mendoza","localidad":"Mendoza","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.hyatt.com/en-US/hotel/argentina/park-hyatt-mendoza-hotel-casino-and-spa/menph?src=corp_lclb_gmb_seo_menph","direccion":"Chile 1124","telefono":"+54 261 441 1234","email":"mendoza.park@hyatt.com"},{"hotel":"Park Tower Buenos Aires","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Monserrat","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.marriott.com/en-us/hotels/buepl-park-tower-a-luxury-collection-hotel-buenos-aires/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0","direccion":"Av. Leandro Alem 1193","telefono":"011 4318-9100","email":"reservations.buenosaires@marriott.com"},{"hotel":"Patios de Cafayate Hotel \u0026 Spa","pais":"Argentina","provincia":"Salta","localidad":"Cafayate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.patiosdecafayate.com.ar/","direccion":"RN 40 Km 4343","telefono":"+54 (03868) 422229","email":"reservas@patiosdecafayate.com"},{"hotel":"Patios de San Telmo","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Telmo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://patiosdesantelmo.com.ar/","direccion":"Chacabuco 752","telefono":"+54 114307 0480","email":"info@patiosdesantelmo.com.ar"},{"hotel":"Pichi Ruka","pais":"Argentina","provincia":"Neuquén","localidad":"Villa El Chocón","nivel":"Certificado Nivel Bronce","sitioWeb":"https://pichiruka.com/","direccion":"Av. 9 de Enero al 300","telefono":"+54 299 4018642","email":"contacto@pichiruka.com"},{"hotel":"Pinares Panorama Suites \u0026 Spa","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Carlos Paz","nivel":"Certificado Nivel Oro","sitioWeb":"https://pinarespanorama.com.ar/","direccion":"Roque Saenz Peña 1300","telefono":"+54 9541 430680","email":""},{"hotel":"Plaza Hotel Salta","pais":"Argentina","provincia":"Salta","localidad":"Ciudad de Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://hotelplazasalta.com/","direccion":"F De Zuviria 135","telefono":"+54 9 3875 77-2591","email":"reservas@ hotelplazasalta.com"},{"hotel":"Plaza Real Suites Hotel","pais":"Argentina","provincia":"Santa Fe","localidad":"Rosario","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.plazarealhotel.com/","direccion":"Santa Fe 1632","telefono":"+54 0341 4490835","email":"reservas@plazarealhotel.com"},{"hotel":"Posada Boutique Las Terrazas","pais":"Uruguay","provincia":"Colonia","localidad":"Colonia del Sacramento","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.posadalasterrazas.com/","direccion":"Manuel Lobo 281","telefono":"+598 4522 4776","email":"reservas@posadalasterrazas.com"},{"hotel":"Pueblo Nativo Resort","pais":"Argentina","provincia":"Córdoba","localidad":"Villa Giardino","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.pueblonativo.com.ar/","direccion":"Constituyentes","telefono":"+54 (03548) 49 1111","email":"reservas@pueblonativo.com.ar"},{"hotel":"Puerto Hamlet","pais":"Argentina","provincia":"Buenos Aires","localidad":"Cariló","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.puertohamlet.com.ar/","direccion":"Cerezo y Avutarda","telefono":"+54 9 02254 - 571623","email":"reservas@hotelessavoia.com"},{"hotel":"Puerto Valle Hotel de Esteros","pais":"Argentina","provincia":"Corrientes","localidad":"Ituzaingó","nivel":"Certificado Nivel Bronce","sitioWeb":"https://hotelpuertovalle.com/","direccion":"Ruta Nacional N°12 km 1282","telefono":"+54 11 48721320","email":"reservas@hotelpuertovalle.com"},{"hotel":"Pullman City Center Rosario","pais":"Argentina","provincia":"Santa Fe","localidad":"Rosario","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.pullman-citycenter.com.ar/?gclid=Cj0KCQjwqoibBhDUARIsAH2OpWgq0Qe5zmnIz2UK0w4FzqC-OTigZqVvDXhiDnWeLQQQh1J_c_I8IPEaAihcEALw_wcB\u0026cur=ARS","direccion":"Bv Oroño y Av Circunvalación","telefono":"+54 0800 222 2489","email":""},{"hotel":"Quinto Centenario Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.quintocentenariohotel.com/","direccion":"Duarte Quirós 1300","telefono":"+54 351 610 8751","email":"reservas@quintocentenario.com"},{"hotel":"Radisson Blu Bariloche","pais":"Argentina","provincia":"Río Negro","localidad":"San Carlos de Bariloche","nivel":"Certificado Nivel Bronce","sitioWeb":"http://choicehotels.com/argentina/san-carlos-de-bariloche/radisson-blu-hotels/aa022?mc=llgoxxpx","direccion":"Av. Exequiel Bustillos 1099","telefono":"+54 029 4445 6932","email":"reservas.bariloche@ownhotels.com"},{"hotel":"Radisson Montevideo Victoria Plaza Hotel","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.choicehotels.com/uruguay/montevideo/radisson-hotels/uy004?mc=llgoxxpx","direccion":"759 Plaza Independencia","telefono":"+598 2 9020111","email":"mundoradisson@radisson.com.uy"},{"hotel":"Recoleta Grand Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Recoleta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.recoletagrand.com/","direccion":"Avenida General Las Heras 1745","telefono":"+54 11 4129 9800","email":"reservebue@grand-hotels-lux.com"},{"hotel":"Regency Golf Hotel Urbano","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.regencygolf.com.uy/","direccion":"Fco. Solano García, 2473","telefono":"+598 95377416","email":"recepcion@regencygolf.com.uy"},{"hotel":"Regency Park Hotel - Event","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.regencypark.com.uy/","direccion":"Ruta 8 - Km 17","telefono":"+598 2517 0101","email":"recepcion@regencypark.com.uy"},{"hotel":"Regency Way Montevideo Hotel","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.regencyway.com.uy/","direccion":"Av. General Fructuoso Rivera 3377","telefono":"+598 95 935 123","email":"recepcion@regencyway.com.uy"},{"hotel":"Regente Palace Hotel","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Recoleta","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.regente.com/","direccion":"Suipacha 964","telefono":"+54 11 4328-6800","email":"ventas@regente.com"},{"hotel":"Rincón del Calafate","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.rincondelcalafate.com/","direccion":"Ingeniero Feldman 273","telefono":"+ 54 9 223 582 5477","email":"rincondelcalafate@tremun.com.ar"},{"hotel":"Rincón del Duende Apart de Mar","pais":"Argentina","provincia":"Buenos Aires","localidad":"Mar de las Pampas","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.rincondelduende.com/","direccion":"Virazon y Playa","telefono":"02255 45-6335","email":"recepcion@rincondelduende.com"},{"hotel":"Rosell Boher Lodge","pais":"Argentina","provincia":"Mendoza","localidad":"Luján de Cuyo","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.rosellboherlodge.com/","direccion":"Servidumbre de Paso s/n entre Ruta Prov 86 y Ruta 7","telefono":"+54 9 261 417 8267","email":"reservas@rosellboherlodge.com"},{"hotel":"San Nicolás Plaza Hotel","pais":"Argentina","provincia":"Buenos Aires","localidad":"San Nicolás de los Arroyos","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.snplazahotel.com/es","direccion":"DE LA NACIÓN 144","telefono":"+54 9 0336 445-1900","email":"reservas@snplazahotel.com"},{"hotel":"Sent Calafate","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Bronce","sitioWeb":"https://sentcalafate.com.ar/portal/es-es/1/Inicio_Sent","direccion":"Av. Jorge Newbery 367","telefono":"+54 0223 491 0989","email":"sentcalafate@tremun.com.ar"},{"hotel":"Sheraton Asunción","pais":"Paraguay","provincia":"Asunción","localidad":"Asunción","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.marriott.com/en-us/hotels/asusi-sheraton-asuncion-hotel/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0","direccion":"Aviadores Del Chaco 2066","telefono":"+595 21-6177000","email":"reservas.asuncion@sheraton.com"},{"hotel":"Sheraton Buenos Aires Hotel \u0026 Convention Center","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Retiro","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.marriott.com/en-us/hotels/buesc-sheraton-buenos-aires-hotel-and-convention-center/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0","direccion":"San Martín 1225","telefono":"+54 11 4318-9000","email":""},{"hotel":"Sheraton Mendoza Hotel","pais":"Argentina","provincia":"Mendoza","localidad":"Mendoza","nivel":"Certificado Nivel Oro","sitioWeb":"https://sheratonmendozahotel.com-hotel.com/es/","direccion":"Primitivo de la Reta 989","telefono":"+54 9 0261 441 5500","email":""},{"hotel":"Sheraton Salta","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Plata","sitioWeb":"https://sheratonsaltahotel.com-hotel.com/es/","direccion":"Coronel Francisco De Uriondo 330","telefono":"0387 432-3000","email":""},{"hotel":"Sheraton Tucumán","pais":"Argentina","provincia":"Tucumán","localidad":"San Miguel de Tucumán","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.marriott.com/en-us/hotels/tucsi-sheraton-tucuman-hotel/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0","direccion":"Av. Soldati y Calle Haití","telefono":"+54 0381 4554731","email":"reservas@soldelnoa.com"},{"hotel":"Sofitel Buenos Aires Recoleta","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Recoleta","nivel":"Certificado Nivel Plata","sitioWeb":"https://all.accor.com/hotel/8932/index.es.shtml?utm_campaign=seo+maps\u0026utm_medium=seo+maps\u0026utm_source=google+Maps","direccion":"Posadas 1232","telefono":"+54 11 4819-1100","email":"h8932-re@accor.com"},{"hotel":"Sofitel La Reserva Cardales","pais":"Argentina","provincia":"Buenos Aires","localidad":"Campana","nivel":"Certificado Nivel Bronce","sitioWeb":"https://sofitel.accor.com/en/hotels/6519.html?merchantid=seo-maps-AR-6519\u0026sourceid=aw-cen\u0026utm_source=google+Maps\u0026utm_medium=seo+maps\u0026utm_campaign=seo+maps\u0026utm_term=Sofitel-Launch","direccion":"Ruta Panamericana No. 9, Km 61","telefono":"+54 03489435555","email":"sofitellareservacardales@sofitel.com"},{"hotel":"Sofitel Montevideo Casino Carrasco \u0026 Spa","pais":"Uruguay","provincia":"Montevideo","localidad":"Montevideo","nivel":"Certificado Nivel Bronce","sitioWeb":"https://sofitel.accor.com/en/hotels/7969.html?merchantid=seo-maps-UY-7969\u0026sourceid=aw-cen\u0026utm_source=google+Maps\u0026utm_medium=seo+maps\u0026utm_campaign=seo+maps\u0026utm_term=Sofitel-Launch","direccion":"Rbla Republica de Mexico 6451","telefono":"+598 26046060","email":"reservations.montevideo@sofitel.com"},{"hotel":"Solanas Punta del Este","pais":"Uruguay","provincia":"Maldonado","localidad":"Punta del Este","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.solanasvacation.com.ar/","direccion":"Ruta IB Km 118","telefono":"+54011 4896 6300","email":"clientes@solanasvacation.com.ar"},{"hotel":"Susana Balbo Unique Stays","pais":"Argentina","provincia":"Mendoza","localidad":"Luján de Cuyo","nivel":"Certificado Nivel Plata","sitioWeb":"https://www.susanabalbohotels.com","direccion":"Viamonte 5022","telefono":"+54 9 261 570 7097","email":"reservas@sbuniquestays.ar"},{"hotel":"The Grand Hotel","pais":"Uruguay","provincia":"Maldonado","localidad":"Punta del Este","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.puntagrand.com/","direccion":"Rbla. Lorenzo Batlle Pacheco","telefono":"+598 93 734 752","email":"reservepunta@grand-hotels-lux.com"},{"hotel":"Tierras del Norte","pais":"Argentina","provincia":"Salta","localidad":"La Calderilla","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.tierrasdelnorte.com.ar/","direccion":"RN9 1621","telefono":"+54 9 387 582 8696","email":"reservas@tierrasdelnorte.com.ar"},{"hotel":"Tupa Lodge","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.tupalodge.com/","direccion":"Opalo s/n","telefono":"+54 3757 67 2064","email":"gerenciatupalodge@gmail.com"},{"hotel":"Up América","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Congreso","nivel":"Certificado Nivel Bronce","sitioWeb":"https://uphoteles.com/up-america-plaza/","direccion":"Bartolomé Mitre 1744","telefono":"+54 11 7700-3777","email":"info.americaplaza@uphoteles.com"},{"hotel":"Up Tribeca","pais":"Argentina","provincia":"C.A.B.A.","localidad":"Monserrat","nivel":"Certificado Nivel Bronce","sitioWeb":"https://uphoteles.com/up-tribeca/","direccion":"Bartolomé Mitre 1265","telefono":"+54 11 7700-3777","email":"info.tribeca@uphoteles.com"},{"hotel":"Up Viamonte","pais":"Argentina","provincia":"C.A.B.A.","localidad":"San Nicolás","nivel":"Certificado Nivel Bronce","sitioWeb":"https://uphoteles.com/up-viamonte/","direccion":"Viamonte 1373","telefono":"+54 11 7700-3777","email":"info.viamonte@uphoteles.com"},{"hotel":"Villa del Cielo Hotel","pais":"Argentina","provincia":"Jujuy","localidad":"Tilcara","nivel":"Certificado Nivel Bronce","sitioWeb":"https://hsol.com.ar/pms/hotels/villadelcielo/index.php?idh=98","direccion":"Prospero Nieva s/n (Continuación La sorpresa)","telefono":"+54 388 495-5537","email":"reservas@villadelcielotilcara.com"},{"hotel":"Villa Vicuña Hotel Salta","pais":"Argentina","provincia":"Salta","localidad":"Salta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.villavicuna.com.ar/es/","direccion":"Caseros 266","telefono":"+ 54 0387 4321579","email":""},{"hotel":"Village Cataratas","pais":"Argentina","provincia":"Misiones","localidad":"Puerto Iguazú","nivel":"Certificado Nivel Plata","sitioWeb":"https://villagecataratas.com/","direccion":"Selva Iryapú","telefono":"+54 (03757) 426000","email":"reservas@villagecataratas.com"},{"hotel":"Wyndham Nordelta Hotel","pais":"Argentina","provincia":"Buenos Aires","localidad":"Nordelta","nivel":"Certificado Nivel Bronce","sitioWeb":"https://hotelwyndhamnordelta.com/","direccion":"Av. del Puerto 240","telefono":"+54 9 11 5236-9018","email":"info@hotelwyndhamnordelta.com"},{"hotel":"Xelena Hotel \u0026 Suites","pais":"Argentina","provincia":"Santa Cruz","localidad":"El Calafate","nivel":"Certificado Nivel Oro","sitioWeb":"https://www.hotelxelena.com/","direccion":"René Favaloro 3500","telefono":"+54 9 11 5376 7971","email":"reservas@xelena.com.ar"},{"hotel":"Y111 Hotel","pais":"Argentina","provincia":"Córdoba","localidad":"Córdoba","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.y111hotel.com/","direccion":"Av. Hipólito Yrigoyen 111","telefono":"+54 351 448 6700","email":"reservas1@y111hotel.com"},{"hotel":"Yacht \u0026 Golf Club Paraguayo, a Tribute Portfolio Resort","pais":"Paraguay","provincia":"Central","localidad":"Lambaré","nivel":"Certificado Nivel Bronce","sitioWeb":"https://www.marriott.com/en-us/hotels/asutx-yacht-and-golf-club-paraguayo-a-tribute-portfolio-resort/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0","direccion":"Avenida del Yacht Nº 11","telefono":"+595 983 890 542","email":"reservas.yacht@tributeportfolio.com"}];
+
+  const LOCALITY_COORDS = {
+    // Buenos Aires
+    "campana": [-34.1687, -58.9591],
+    "carilo": [-36.9944, -56.8889],
+    "la plata": [-34.9214, -57.9545],
+    "mar de las pampas": [-37.3323, -57.0272],
+    "mar del plata": [-38.0055, -57.5562],
+    "nordelta": [-34.4206, -58.6473],
+    "san nicolas de los arroyos": [-33.3335, -60.2255],
+    "tandil": [-37.3217, -59.1332],
+    // C.A.B.A.
+    "congreso": [-34.6097, -58.3927],
+    "monserrat": [-34.6125, -58.3820],
+    "palermo": [-34.5885, -58.4306],
+    "puerto madero": [-34.6110, -58.3620],
+    "recoleta": [-34.5880, -58.3930],
+    "retiro": [-34.5925, -58.3750],
+    "san nicolas": [-34.6040, -58.3780],
+    "san telmo": [-34.6212, -58.3731],
+    // Chubut
+    "puerto madryn": [-42.7692, -65.0385],
+    // Cordoba
+    "alta gracia": [-31.6529, -64.4283],
+    "ascochinga": [-30.9577, -64.2982],
+    "cordoba": [-31.4201, -64.1888],
+    "los cocos": [-30.9255, -64.5025],
+    "mina clavero": [-31.7262, -65.0044],
+    "san antonio de arredondo": [-31.4795, -64.5262],
+    "santa catalina": [-30.8686, -64.2384],
+    "santa rosa de calamuchita": [-32.0694, -64.5367],
+    "tanti": [-31.3575, -64.5828],
+    "villa carlos paz": [-31.4241, -64.4978],
+    "villa ciudad de america": [-31.7850, -64.5340],
+    "villa del dique": [-32.1762, -64.4552],
+    "villa del totoral": [-30.8203, -63.7161],
+    "villa general belgrano": [-31.9774, -64.5574],
+    "villa giardino": [-31.0506, -64.4789],
+    // Corrientes
+    "colonia carlos pellegrini": [-28.5333, -57.1833],
+    "ituzaingo": [-27.5819, -56.6806],
+    // Entre Rios
+    "concordia": [-31.3930, -58.0209],
+    "parana": [-31.7333, -60.5333],
+    // Jujuy
+    "huacalera": [-23.4419, -65.3524],
+    "purmamarca": [-23.7461, -65.4989],
+    "san salvador de jujuy": [-24.1858, -65.2995],
+    "tilcara": [-23.5776, -65.3937],
+    // Mendoza
+    "general alvear": [-34.9754, -67.6894],
+    "guaymallen": [-32.9000, -68.7833],
+    "lujan de cuyo": [-33.0361, -68.8797],
+    "mendoza": [-32.8895, -68.8458],
+    "tunuyan": [-33.5772, -69.0142],
+    // Misiones
+    "puerto iguazu": [-25.5991, -54.5736],
+    // Neuquen
+    "neuquen": [-38.9516, -68.0591],
+    "villa el chocon": [-39.2667, -68.7833],
+    "villa la angostura": [-40.7631, -71.6447],
+    // Rio Negro
+    "san carlos de bariloche": [-41.1335, -71.3103],
+    // Salta
+    "cachi": [-25.1214, -66.1627],
+    "cafayate": [-26.0731, -65.9761],
+    "ciudad de salta": [-24.7821, -65.4232],
+    "iruya": [-22.7917, -65.2167],
+    "la calderilla": [-24.6333, -65.3833],
+    "rosario de la frontera": [-25.7967, -64.9708],
+    "salta": [-24.7821, -65.4232],
+    "san antonio de los cobres": [-24.2192, -66.3181],
+    "tartagal": [-22.5164, -63.8014],
+    // Santa Cruz
+    "el calafate": [-50.3379, -72.2648],
+    "el chalten": [-49.3315, -72.8864],
+    // Santa Fe
+    "rosario": [-32.9468, -60.6393],
+    // Santiago del Estero
+    "villa rio hondo": [-27.4944, -64.8625],
+    // Tierra del Fuego
+    "ushuaia": [-54.8019, -68.3030],
+    // Tucuman
+    "san miguel de tucuman": [-26.8083, -65.2176],
+    "yerba buena": [-26.8167, -65.3167],
+    // Paraguay
+    "ciudad del este": [-25.5097, -54.6111],
+    "asuncion": [-25.2637, -57.5759],
+    "capiata": [-25.3556, -57.4458],
+    "lambare": [-25.3456, -57.6067],
+    // Uruguay
+    "guazuvira": [-34.7833, -55.6000],
+    "colonia del sacramento": [-34.4626, -57.8400],
+    "piriapolis": [-34.8628, -55.2747],
+    "punta del este": [-34.9667, -54.9500],
+    "montevideo": [-34.9011, -56.1645],
+    "termas del dayman": [-31.4667, -57.9000]
+  };
+
+  let mapInstance = null;
+  let markersLayer = null;
+  let allHotels = [];
+  let activeLevelFilter = "all";
+  let activeProvFilter = "";
+  let searchQuery = "";
+  let dataLoaded = false;
+
+  function normalizeKey(str) {
+    return (str || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function getLevelCategory(nivel) {
+    const n = normalizeKey(nivel);
+    if (n.includes("oro")) return "oro";
+    if (n.includes("plata")) return "plata";
+    if (n.includes("bronce")) return "bronce";
+    return "bronce";
+  }
+
+  function parseCSVText(text) {
+    const rows = [];
+    let row = [""];
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      const next = text[i + 1];
+      if (c === '"') {
+        if (inQuotes && next === '"') {
+          row[row.length - 1] += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (c === ';' && !inQuotes) {
+        row.push("");
+      } else if ((c === '\r' || c === '\n') && !inQuotes) {
+        if (c === '\r' && next === '\n') i++;
+        rows.push(row);
+        row = [""];
+      } else {
+        row[row.length - 1] += c;
+      }
+    }
+    if (row.length > 1 || row[0] !== "") rows.push(row);
+
+    const hotels = [];
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const hotel = (r[0] || "").trim();
+      if (!hotel || hotel === '"' || hotel === ";") continue;
+      let web = (r[5] || "").trim();
+      if (web && !/^https?:\/\//i.test(web)) {
+        if (web.startsWith("http://https//")) web = web.replace("http://https//", "https://");
+        else if (web.startsWith("https//")) web = "https://" + web.slice(7);
+        else web = "http://" + web;
+      }
+      hotels.push({
+        hotel: hotel,
+        pais: (r[1] || "").trim(),
+        provincia: (r[2] || "").trim(),
+        localidad: (r[3] || "").trim(),
+        nivel: (r[4] || "").trim(),
+        sitioWeb: web,
+        direccion: (r[6] || "").trim(),
+        telefono: (r[7] || "").trim(),
+        email: (r[8] || "").trim().replace(/^"|"$/g, "").trim()
+      });
+    }
+    return hotels;
+  }
+
+  async function fetchHMVHotels() {
+    try {
+      const csvUrl = new URL("HMV.csv", window.location.href);
+      const resp = await fetch(csvUrl.toString());
+      if (resp.ok) {
+        const buffer = await resp.arrayBuffer();
+        let decodedText;
+        try {
+          decodedText = new TextDecoder("windows-1252").decode(buffer);
+        } catch (e) {
+          decodedText = new TextDecoder("utf-8").decode(buffer);
+        }
+        const parsed = parseCSVText(decodedText);
+        if (parsed && parsed.length > 0) {
+          console.info("HMV.csv cargado din\u00e1micamente (" + parsed.length + " hoteles).");
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("No se pudo cargar HMV.csv v\u00eda fetch (posible protocolo file:// o CORS). Usando datos integrados.", e);
+    }
+    return FALLBACK_HOTELS;
+  }
+
+  function assignCoordinates(hotels) {
+    const localityCounters = {};
+    return hotels.map(h => {
+      const normLoc = normalizeKey(h.localidad);
+      const baseCoord = LOCALITY_COORDS[normLoc] || [-34.6037, -58.3816];
+      const count = localityCounters[normLoc] || 0;
+      localityCounters[normLoc] = count + 1;
+
+      let lat = baseCoord[0];
+      let lng = baseCoord[1];
+      if (count > 0) {
+        const angle = count * 1.35;
+        const radius = 0.0035 * Math.sqrt(count);
+        lat += radius * Math.cos(angle);
+        lng += radius * Math.sin(angle);
+      }
+      return {
+        ...h,
+        lat: lat,
+        lng: lng,
+        levelCat: getLevelCategory(h.nivel)
+      };
+    });
+  }
+
+  function createCustomMarker(hotel) {
+    const pinClass = "pin-" + hotel.levelCat;
+    const icon = L.divIcon({
+      className: "hmv-pin-container",
+      html: '<div class="hmv-custom-pin ' + pinClass + '" style="width:16px;height:16px;"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
+      popupAnchor: [0, -10]
+    });
+
+    const marker = L.marker([hotel.lat, hotel.lng], { icon: icon });
+
+    let popupHtml = '<div class="hmv-popup">';
+    popupHtml += '<span class="hmv-popup-badge hmv-badge-' + hotel.levelCat + '">' + (hotel.nivel || "Certificado") + '</span>';
+    popupHtml += '<h4 class="hmv-popup-title">' + hotel.hotel + '</h4>';
+    popupHtml += '<p class="hmv-popup-loc">\ud83d\udccd ' + hotel.localidad + ', ' + hotel.provincia + ' (' + hotel.pais + ')</p>';
+    if (hotel.direccion) {
+      popupHtml += '<p class="hmv-popup-dir">\ud83c\udfe0 ' + hotel.direccion + '</p>';
+    }
+    if (hotel.telefono) {
+      popupHtml += '<p class="hmv-popup-tel">\ud83d\udcde ' + hotel.telefono + '</p>';
+    }
+    if (hotel.email) {
+      popupHtml += '<p class="hmv-popup-email">\u2709\ufe0f <a href="mailto:' + hotel.email + '">' + hotel.email + '</a></p>';
+    }
+    if (hotel.sitioWeb) {
+      popupHtml += '<p class="hmv-popup-web"><a href="' + hotel.sitioWeb + '" target="_blank" rel="noopener noreferrer">Visitar sitio web oficial \u2197</a></p>';
+    }
+    popupHtml += '</div>';
+
+    marker.bindPopup(popupHtml);
+    return marker;
+  }
+
+  function renderFilteredMarkers() {
+    if (!markersLayer || !mapInstance) return;
+    markersLayer.clearLayers();
+
+    const q = normalizeKey(searchQuery);
+    const filtered = allHotels.filter(h => {
+      if (activeLevelFilter !== "all" && h.levelCat !== activeLevelFilter) {
+        return false;
+      }
+      if (activeProvFilter && h.provincia !== activeProvFilter) {
+        return false;
+      }
+      if (q) {
+        const text = normalizeKey(h.hotel + " " + h.localidad + " " + h.provincia + " " + h.pais + " " + h.direccion);
+        if (!text.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const bounds = [];
+    filtered.forEach(h => {
+      const m = createCustomMarker(h);
+      markersLayer.addLayer(m);
+      bounds.push([h.lat, h.lng]);
+    });
+
+    // Actualizar texto de estado
+    const statusEl = document.getElementById("hmv-status");
+    if (statusEl) {
+      const count = filtered.length;
+      let msg = "Mostrando " + count + (count === 1 ? " alojamiento" : " alojamientos");
+      if (activeLevelFilter !== "all") {
+        msg += " con Nivel " + activeLevelFilter.charAt(0).toUpperCase() + activeLevelFilter.slice(1);
+      }
+      if (activeProvFilter) {
+        msg += " en " + activeProvFilter;
+      }
+      if (searchQuery.trim()) {
+        msg += ' para "' + searchQuery.trim() + '"';
+      }
+      statusEl.textContent = msg + ".";
+    }
+
+    if (bounds.length > 0 && (activeProvFilter || searchQuery.trim())) {
+      mapInstance.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+    }
+  }
+
+  function setupMapControls() {
+    const provSelect = document.getElementById("hmv-prov-select");
+    const searchInput = document.getElementById("hmv-search");
+    const levelBtns = document.querySelectorAll(".level-btn");
+
+    // Llenar select de provincias
+    if (provSelect) {
+      const provs = Array.from(new Set(allHotels.map(h => h.provincia).filter(Boolean))).sort((a, b) => a.localeCompare(b, "es"));
+      provSelect.innerHTML = '<option value="">Todas las provincias / departamentos (' + allHotels.length + ')</option>';
+      provs.forEach(p => {
+        const count = allHotels.filter(h => h.provincia === p).length;
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p + " (" + count + ")";
+        provSelect.appendChild(opt);
+      });
+
+      provSelect.addEventListener("change", (e) => {
+        activeProvFilter = e.target.value;
+        renderFilteredMarkers();
+      });
+    }
+
+    // Contadores para insignias de nivel
+    const totalCount = allHotels.length;
+    const oroCount = allHotels.filter(h => h.levelCat === "oro").length;
+    const plataCount = allHotels.filter(h => h.levelCat === "plata").length;
+    const bronceCount = allHotels.filter(h => h.levelCat === "bronce").length;
+
+    const cAll = document.getElementById("count-all");
+    const cOro = document.getElementById("count-oro");
+    const cPlata = document.getElementById("count-plata");
+    const cBronce = document.getElementById("count-bronce");
+    if (cAll) cAll.textContent = totalCount;
+    if (cOro) cOro.textContent = oroCount;
+    if (cPlata) cPlata.textContent = plataCount;
+    if (cBronce) cBronce.textContent = bronceCount;
+
+    // Botones de nivel
+    levelBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        levelBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeLevelFilter = btn.getAttribute("data-level") || "all";
+        renderFilteredMarkers();
+      });
+    });
+
+    // Busqueda en vivo
+    if (searchInput) {
+      let timeout = null;
+      searchInput.addEventListener("input", (e) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          searchQuery = e.target.value;
+          renderFilteredMarkers();
+        }, 200);
+      });
+    }
+  }
+
+  let mapInitializationPromise = null;
+
+  async function initializeMap() {
+    const mapElement = document.getElementById("map");
+    const mapPage = document.getElementById("mapa-pagina");
+
+    if (!mapElement || !mapPage || location.hash !== "#mapa-pagina") return;
+
+    if (typeof L === "undefined") {
+      mapElement.innerHTML = '<p style="padding:20px">No se pudo cargar Leaflet. Revisá tu conexión a internet y recargá la página.</p>';
+      return;
+    }
+
+    // Esperar al siguiente ciclo para que la sección :target ya tenga dimensiones.
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    if (!mapInstance) {
+      mapInstance = L.map(mapElement, { scrollWheelZoom: true }).setView([-38.416, -63.616], 4);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
+        subdomains: "abcd",
+        maxZoom: 19
+      }).addTo(mapInstance);
+      markersLayer = L.layerGroup().addTo(mapInstance);
+    }
+
+    if (!dataLoaded && !mapInitializationPromise) {
+      mapInitializationPromise = (async () => {
+        const rawHotels = await fetchHMVHotels();
+        allHotels = assignCoordinates(rawHotels);
+        dataLoaded = true;
+        setupMapControls();
+        renderFilteredMarkers();
+      })().catch(error => {
+        console.error("Error al inicializar los alojamientos:", error);
+        const status = document.getElementById("hmv-status");
+        if (status) status.textContent = "No se pudieron cargar los alojamientos. Revisá HMV.csv o los datos integrados.";
+      }).finally(() => { mapInitializationPromise = null; });
+      await mapInitializationPromise;
+    }
+
+    setTimeout(() => { if (mapInstance) mapInstance.invalidateSize(true); }, 250);
+  }
+
+  function handleNavigation() {
+    if (location.hash === "#mapa-pagina") initializeMap();
+  }
+
+  // Recalcular el mapa cuando se entra a la sección o cambia el tamaño de pantalla.
+  window.addEventListener("hashchange", handleNavigation);
+  window.addEventListener("load", handleNavigation);
+  window.addEventListener("resize", () => {
+    if (location.hash === "#mapa-pagina" && mapInstance) mapInstance.invalidateSize();
+  });
+
+  // Reproductor de YouTube integrado: se carga al pulsar cualquiera de los botones.
+  const videoCover = document.getElementById("video-cover");
+  const videoFrame = document.getElementById("yt-iframe");
+  const embedButton = document.getElementById("btn-toggle-embed");
+  const videoUrl = "https://www.youtube-nocookie.com/embed/YDL8HbY9ENU?autoplay=1&rel=0";
+
+  function playVideoInPage(event) {
+    if (event) event.preventDefault();
+    if (videoFrame) {
+      videoFrame.src = videoUrl;
+      videoFrame.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share");
+    }
+    if (videoCover) videoCover.classList.add("is-hidden");
+  }
+
+  const videoPlayLink = document.querySelector(".video-play-btn");
+  if (videoPlayLink) videoPlayLink.addEventListener("click", playVideoInPage);
+  if (embedButton) embedButton.addEventListener("click", playVideoInPage);
+</script>
+
+</body>
+</html>
