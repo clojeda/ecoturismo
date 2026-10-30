@@ -2316,9 +2316,10 @@ footer small { color: #d5ddcf; }
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
           mapInstance = L.map("map", { scrollWheelZoom: true }).setView([-38.416, -63.616], 4);
-          L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
-            maxZoom: 19
+          // Mapa base oficial de la República Argentina (Argenmap, IGN)
+          L.tileLayer("https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png", {
+            attribution: '&copy; <a href="https://www.ign.gob.ar" target="_blank" rel="noopener noreferrer">Instituto Geogr\u00e1fico Nacional</a> &middot; <a href="https://ign-argentina.github.io/argenmap-web/" target="_blank" rel="noopener noreferrer">Argenmap</a>',
+            maxZoom: 18
           }).addTo(mapInstance);
           markersLayer = L.layerGroup().addTo(mapInstance);
 
@@ -2384,3 +2385,4 @@ footer small { color: #d5ddcf; }
 </script>
 
 </body>
+</html>
