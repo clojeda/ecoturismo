@@ -504,12 +504,13 @@ nav a:hover { color: var(--clay); }
 
 .about-top {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10%;
-  align-items: start;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 6%;
+  align-items: center;
 }
 
-.about-top p { color: var(--muted); }
+
+.about-top p { color: var(--muted); max-width: 46ch; }
 
 .about-top .lead {
   font-family: var(--serif);
@@ -519,9 +520,11 @@ nav a:hover { color: var(--clay); }
 
 /* MONIGOTE SALUDANDO/CELEBRANDO */
 .dancer-illustration {
-  width: 90px;
-  margin-top: 15px;
+  width: 72px;
+  margin-top: 0;
+  margin-bottom: 8px;
 }
+
 
 .dancer-illustration svg {
   display: block;
@@ -1182,10 +1185,14 @@ body:has(.content-page:target) .home-link {
 /* COMENTARIOS */
 .comments-box {
   margin-top: 45px;
-  padding: 30px;
+  padding: 34px 38px;
   border: 1px solid var(--line);
   background: #fbf9f2;
-}
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 40px;
+  align-items: start;
+};
 .comments-box h3 {
   font-family: var(--serif);
   font-size: 1.5rem;
@@ -1195,7 +1202,6 @@ body:has(.content-page:target) .home-link {
 #comentarios-form, .suscripcion {
   display: grid;
   gap: 10px;
-  max-width: 560px;
 }
 #comentarios-form input,
 #comentarios-form textarea,
@@ -1236,6 +1242,8 @@ body:has(.content-page:target) .home-link {
 }
 .comentario strong { display: block; font-size: .9rem; color: var(--forest); }
 .comentario p { margin: 4px 0 0; font-size: .93rem; }
+#com-lista { grid-column: 2; grid-row: 1 / span 20; }
+
 .suscripcion {
   margin-top: 26px;
   padding-top: 22px;
@@ -2186,7 +2194,7 @@ footer small { color: #d5ddcf; }
         { text: "Guardarlos y llevarlos de regreso a casa o a un contenedor urbano.", correct: true },
         { text: "Enterrarlos en el sendero.", correct: false }
       ],
-      feedback: "¡Exacto! Aunque sean biodegradables, las cáscaras tardan meses en degradarse y pueden alterar la dieta de los animales silvestres."
+      feedback: "Aunque sean biodegradables, las cáscaras tardan meses en degradarse y pueden alterar la dieta de los animales silvestres."
     },
     {
       question: "Durante un recorrido observás fauna silvestre cerca del camino. ¿Cómo debés actuar?",
@@ -2195,7 +2203,7 @@ footer small { color: #d5ddcf; }
         { text: "Ofrecerles alimento liviano como fruta o pan.", correct: false },
         { text: "Mantener la distancia, hacer silencio y no alimentarlos.", correct: true }
       ],
-      feedback: "¡Correcto! Mantener distancia evita estresar a los animales y darles comida altera su comportamiento natural y salud."
+      feedback: "Mantener distancia evita estresar a los animales y darles comida altera su comportamiento natural y salud."
     },
     {
       question: "Si querés hacer una fogata en un área natural o parque, ¿cuál es la pauta correcta?",
@@ -2204,7 +2212,7 @@ footer small { color: #d5ddcf; }
         { text: "Armar un círculo de piedras en cualquier lugar despejado.", correct: false },
         { text: "Tapar las brasas con tierra seca antes de irte.", correct: false }
       ],
-      feedback: "¡Muy bien! Utilizá solo sitios autorizados y asegurate de apagar el fuego con agua. Cubrir brasas con tierra mantiene el calor y puede reactivar incendios."
+      feedback: "Utilizá solo sitios autorizados y asegurate de apagar el fuego con agua. Cubrir brasas con tierra mantiene el calor y puede reactivar incendios."
     },
     {
       question: "Al caminar por senderos delimitados en una reserva natural o parque:",
@@ -2213,7 +2221,7 @@ footer small { color: #d5ddcf; }
         { text: "Debés mantenerte siempre dentro de la huella marcada para no erosionar el suelo ni pisar flora nativa.", correct: true },
         { text: "Está permitido abrir nuevos atajos si hay barro.", correct: false }
       ],
-      feedback: "¡Excelente! Salirse del camino destruye la vegetación frágil y causa erosión en los suelos."
+      feedback: "Salirse del camino destruye la vegetación frágil y causa erosión en los suelos."
     },
     {
       question: "En relación con los ruidos y el sonido en entornos naturales:",
@@ -2222,7 +2230,7 @@ footer small { color: #d5ddcf; }
         { text: "Evitar ruidos molestos y usar parlantes para escuchar el entorno natural.", correct: true },
         { text: "Solo hay que hacer silencio durante la noche.", correct: false }
       ],
-      feedback: "¡Así es! El silencio o volumen bajo permite que los animales no se asusten y que todas las personas disfruten de los sonidos de la naturaleza."
+      feedback: "El silencio o volumen bajo permite que los animales no se asusten y que todas las personas disfruten de los sonidos de la naturaleza."
     }
   ];
 
