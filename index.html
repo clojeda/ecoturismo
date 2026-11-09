@@ -1442,7 +1442,7 @@ footer small { color: #d5ddcf; }
 </svg>
 
 <header>
-  <a class="logo home-link" href="#inicio">Territorio<span> Vivo</span></a>
+  <a class="logo home-link" href="#inicio">Territorio<span> Vivo.</span></a>
 
   <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
 
@@ -2873,57 +2873,90 @@ footer small { color: #d5ddcf; }
     });
   })();
   
-    // ---- COMENTARIOS (auto-publicados) ----
-  (function () {
-    const form = document.getElementById("comentarios-form");
-    if (!form) return;
-    const nombre = document.getElementById("com-nombre");
-    const texto = document.getElementById("com-texto");
-    const contador = document.getElementById("com-count");
-    const estado = document.getElementById("com-estado");
-    const lista = document.getElementById("com-lista");
+    
+// ---- COMENTARIOS (auto-publicados) ----
+(function () {
+  const form = document.getElementById("comentarios-form");
+  if (!form) return;
 
-    texto.addEventListener("input", () => { contador.textContent = texto.value.length; });
+  const nombre = document.getElementById("com-nombre");
+  const texto = document.getElementById("com-texto");
+  const contador = document.getElementById("com-count");
+  const estado = document.getElementById("com-estado");
+  const lista = document.getElementById("com-lista");
 
-    function pintar(items) {
-      lista.innerHTML = "";
-      (items || []).forEach(c => {
-        const art = document.createElement("article");
-        art.className = "comentario";
-        const h = document.createElement("strong");
-        h.textContent = c.nombre;
-        const p = document.createElement("p");
-        p.textContent = c.texto;
-        art.appendChild(h); art.appendChild(p);
-        lista.appendChild(art);
-      });
-    }
+  texto.addEventListener("input", () => {
+    contador.textContent = texto.value.length;
+  });
 
-    fetch("/.netlify/functions/comentarios")
-      .then(r => r.ok ? r.json() : [])
-      .then(pintar)
-      .catch(() => {});
+  function pintar(items) {
+    lista.innerHTML = "";
 
-    form.addEventListener("submit", async e => {
-      e.preventDefault();
-      estado.textContent = "Publicando...";
-      try {
-        const r = await fetch("/.netlify/functions/comentarios", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nombre: nombre.value.trim(), texto: texto.value.trim() })
-        });
-        if (!r.ok) throw new Error();
-        form.reset();
-        contador.textContent = "0";
-        estado.textContent = "¡Gracias! Tu comentario ya está publicado.";
-        const items = await fetch("/.netlify/functions/comentarios").then(x => x.ok ? x.json() : []);
-        pintar(items);
-      } catch (err) {
-        estado.textContent = "No se pudo publicar. Probá de nuevo en un momento.";
-      }
+    (items || []).forEach(c => {
+      const art = document.createElement("article");
+      art.className = "comentario";
+
+      const h = document.createElement("strong");
+      h.textContent = c.nombre;
+
+      const p = document.createElement("p");
+      p.textContent = c.comentario;
+
+      art.appendChild(h);
+      art.appendChild(p);
+      lista.appendChild(art);
     });
-  })();
+  }
+
+  async function cargarComentarios() {
+    try {
+      const r = await fetch("/api/comentarios");
+      if (!r.ok) throw new Error();
+      pintar(await r.json());
+    } catch {
+      console.error("No se pudieron cargar los comentarios");
+    }
+  }
+
+  cargarComentarios();
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    estado.textContent = "Publicando...";
+
+    try {
+      const r = await fetch("/api/comentarios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          nombre: nombre.value.trim(),
+          comentario: texto.value.trim()
+        })
+      });
+
+      if (!r.ok) {
+        const error = await r.json();
+        throw new Error(error.error || "Error al publicar");
+      }
+
+      form.reset();
+      contador.textContent = "0";
+
+      estado.textContent = "¡Gracias! Tu comentario ya está publicado.";
+
+      await cargarComentarios();
+
+    } catch (err) {
+      console.error(err);
+      estado.textContent =
+        "No se pudo publicar. Probá de nuevo en un momento.";
+    }
+  });
+})();
+
 
   // ---- SUSCRIPCIÓN MENSUAL A LA REVISTA ----
   (function () {
