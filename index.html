@@ -2874,7 +2874,8 @@ footer small { color: #d5ddcf; }
   })();
   
     
-// ---- COMENTARIOS (auto-publicados) ----
+
+// ---- COMENTARIOS (auto-publicados con opción de eliminar) ----
 (function () {
   const form = document.getElementById("comentarios-form");
   if (!form) return;
@@ -2885,12 +2886,31 @@ footer small { color: #d5ddcf; }
   const estado = document.getElementById("com-estado");
   const lista = document.getElementById("com-lista");
 
+  const CLAVE_TOKENS = "mis-comentarios";
+
+  // Recuperar los códigos privados guardados en este navegador
+  function obtenerTokens() {
+    try {
+      return JSON.parse(localStorage.getItem(CLAVE_TOKENS)) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function guardarToken(id, token) {
+    const tokens = obtenerTokens();
+    tokens[id] = token;
+    localStorage.setItem(CLAVE_TOKENS, JSON.stringify(tokens));
+  }
+
   texto.addEventListener("input", () => {
     contador.textContent = texto.value.length;
   });
 
   function pintar(items) {
     lista.innerHTML = "";
+
+    const tokens = obtenerTokens();
 
     (items || []).forEach(c => {
       const art = document.createElement("article");
@@ -2904,6 +2924,54 @@ footer small { color: #d5ddcf; }
 
       art.appendChild(h);
       art.appendChild(p);
+
+      // Mostrar eliminar solamente si este navegador tiene el código
+      if (tokens[c.id]) {
+        const boton = document.createElement("button");
+        boton.type = "button";
+        boton.textContent = "Eliminar";
+        boton.className = "comentario-eliminar";
+
+        boton.addEventListener("click", async () => {
+          if (!confirm("¿Querés eliminar tu comentario?")) return;
+
+          boton.disabled = true;
+          boton.textContent = "Eliminando...";
+
+          try {
+            const r = await fetch("/api/comentarios", {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                id: c.id,
+                token: tokens[c.id]
+              })
+            });
+
+            if (!r.ok) throw new Error("No se pudo eliminar");
+
+            const nuevosTokens = obtenerTokens();
+            delete nuevosTokens[c.id];
+            localStorage.setItem(
+              CLAVE_TOKENS,
+              JSON.stringify(nuevosTokens)
+            );
+
+            await cargarComentarios();
+
+          } catch (err) {
+            console.error(err);
+            boton.disabled = false;
+            boton.textContent = "Eliminar";
+            alert("No se pudo eliminar el comentario. Probá de nuevo.");
+          }
+        });
+
+        art.appendChild(boton);
+      }
+
       lista.appendChild(art);
     });
   }
@@ -2913,8 +2981,8 @@ footer small { color: #d5ddcf; }
       const r = await fetch("/api/comentarios");
       if (!r.ok) throw new Error();
       pintar(await r.json());
-    } catch {
-      console.error("No se pudieron cargar los comentarios");
+    } catch (err) {
+      console.error("No se pudieron cargar los comentarios", err);
     }
   }
 
@@ -2937,10 +3005,14 @@ footer small { color: #d5ddcf; }
         })
       });
 
+      const resultado = await r.json();
+
       if (!r.ok) {
-        const error = await r.json();
-        throw new Error(error.error || "Error al publicar");
+        throw new Error(resultado.error || "Error al publicar");
       }
+
+      // Guardar el código privado de eliminación
+      guardarToken(resultado.id, resultado.token);
 
       form.reset();
       contador.textContent = "0";
@@ -2958,31 +3030,47 @@ footer small { color: #d5ddcf; }
 })();
 
 
-  // ---- SUSCRIPCIÓN MENSUAL A LA REVISTA ----
-  (function () {
-    const form = document.getElementById("suscripcion-form");
-    if (!form) return;
-    const estado = document.getElementById("sus-estado");
-    form.addEventListener("submit", async e => {
-      e.preventDefault();
-      estado.textContent = "Enviando...";
-      try {
-        const r = await fetch("/.netlify/functions/suscribir", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            nombre: document.getElementById("sus-nombre").value.trim(),
-            email: document.getElementById("sus-email").value.trim()
-          })
-        });
-        if (!r.ok) throw new Error();
-        form.reset();
-        estado.textContent = "¡Listo! Vas a recibir la revista cada mes.";
-      } catch (err) {
-        estado.textContent = "No se pudo enviar. Probá de nuevo en un momento.";
+
+// ---- SUSCRIPCIÓN MENSUAL A LA REVISTA ----
+(function () {
+  const form = document.getElementById("suscripcion-form");
+  if (!form) return;
+
+  const estado = document.getElementById("sus-estado");
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+
+    estado.textContent = "Enviando...";
+
+    try {
+      const r = await fetch("/api/suscribir", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          nombre: document.getElementById("sus-nombre").value.trim(),
+          email: document.getElementById("sus-email").value.trim()
+        })
+      });
+
+      if (!r.ok) {
+        const error = await r.json();
+        throw new Error(error.error || "Error al suscribirse");
       }
-    });
-  })();
+
+      form.reset();
+      estado.textContent = "¡Listo! Tu suscripción fue registrada correctamente.";
+
+    } catch (err) {
+      console.error(err);
+      estado.textContent = "No se pudo enviar. Probá de nuevo en un momento.";
+    }
+  });
+})();
+
+  
 
 
 </script>
