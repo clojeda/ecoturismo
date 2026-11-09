@@ -1,0 +1,9 @@
+
+{
+  "name": "explora-argentina",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "^11.1.6"
+  }
+}
