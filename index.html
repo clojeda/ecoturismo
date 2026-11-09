@@ -1179,6 +1179,75 @@ body:has(.content-page:target) .home-link {
   .prov-grid { grid-template-columns: 1fr; }
 }
 
+/* COMENTARIOS */
+.comments-box {
+  margin-top: 45px;
+  padding: 30px;
+  border: 1px solid var(--line);
+  background: #fbf9f2;
+}
+.comments-box h3 {
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  margin: 0 0 6px;
+}
+.comments-box .muted { font-size: .92rem; margin-bottom: 18px; }
+#comentarios-form, .suscripcion {
+  display: grid;
+  gap: 10px;
+  max-width: 560px;
+}
+#comentarios-form input,
+#comentarios-form textarea,
+.suscripcion input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  border-radius: 3px;
+}
+#comentarios-form textarea { min-height: 90px; resize: vertical; }
+.com-count {
+  font-size: .78rem;
+  color: var(--muted);
+  text-align: right;
+  margin-top: -6px;
+}
+#comentarios-form button,
+.suscripcion button {
+  justify-self: start;
+  border: 0;
+  background: var(--forest);
+  color: #fff;
+  padding: 11px 20px;
+  cursor: pointer;
+  font-size: .9rem;
+}
+#comentarios-form button:hover,
+.suscripcion button:hover { background: var(--clay); }
+#com-estado, #sus-estado { font-size: .88rem; color: var(--muted); margin: 0; }
+#com-lista { margin-top: 22px; display: grid; gap: 14px; }
+.comentario {
+  padding: 14px 16px;
+  background: #fffdf7;
+  border-left: 3px solid var(--moss);
+}
+.comentario strong { display: block; font-size: .9rem; color: var(--forest); }
+.comentario p { margin: 4px 0 0; font-size: .93rem; }
+.suscripcion {
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.suscripcion h3 {
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  margin: 0 0 4px;
+}
+
+
 /* PIE */
 
 footer {
@@ -1319,8 +1388,9 @@ footer small { color: #d5ddcf; }
     <a href="#inicio" class="home-link">Inicio</a>
     <a href="#proyecto" class="home-link">El proyecto</a>
     <a href="#revista">La revista</a>
-    <a href="#mapa-pagina">Mapa</a>
-    <a href="#ecoturismo">Ecoturismo</a>
+    <a href="#mapa-pagina">Alojamientos sustentables</a>
+    <a href="#ecoturismo">Explorá Argentina</a>
+
   </nav>
 </header>
 
@@ -1428,10 +1498,7 @@ footer small { color: #d5ddcf; }
           guarda y la biodiversidad que lo mantiene vivo.
         </p>
         <p>
-          Territorio Vivo es un espacio para acercarnos al patrimonio
-          natural y cultural de Argentina. Reunimos información,
-          herramientas y propuestas para descubrir el territorio con
-          curiosidad y recorrerlo de una manera más responsable.
+          Somos Lucila, Luna y Silvana, estudiantes de la materia Herramientas Informáticas, del IFTS 22, de la Ciudad Autónoma de Buenos Aires. Con este proyecto nos proponemos combinar la protección del ambiente y la promoción del turismo nacional a través del uso de plataformas digitales que garanticen la llegada a todo el territorio. Uno de nuestros objetivos es reunir y poner a disposición información útil, recursos e ideas para planificar experiencias turísticas sustentables, que no sólo no afecten al ambiente sino que tengan un impacto positivo en el entorno y la comunidad.
         </p>
       </div>
     </section>
@@ -1504,35 +1571,27 @@ footer small { color: #d5ddcf; }
             de fomentar su cuidado.
           </p>
           <p>
-            Queremos que la información sea útil y accesible: que sirva
-            para aprender, ubicar lugares de interés y encontrar
-            iniciativas locales vinculadas al turismo responsable.
           </p>
         </div>
       </div>
-
-      <div class="values">
-        <article class="value">
-          <span>01 — COMPARTIR</span>
-          <h3>Historias y saberes</h3>
-          <p>Contenidos para conocer el patrimonio natural y cultural.</p>
-        </article>
-
-        <article class="value">
-          <span>02 — EXPLORAR</span>
-          <h3>Lugares en el mapa</h3>
-          <p>Una herramienta para orientarse y descubrir nuevos destinos.</p>
-        </article>
-
-        <article class="value">
-          <span>03 — ENCONTRAR</span>
-          <h3>Propuestas locales</h3>
-          <p>Recursos para buscar experiencias de turismo en contacto con la naturaleza.</p>
-        </article>
+      <div class="comments-box">
+        <h3>Contanos tu experiencia eco-viajera</h3>
+        <p class="muted">Compartí consejos para disfrutar y cuidar la naturaleza.</p>
+        <form id="comentarios-form">
+          <input type="text" id="com-nombre" maxlength="60" placeholder="Tu nombre" required>
+          <textarea id="com-texto" maxlength="300" placeholder="Tu comentario (hasta 300 caracteres)" required></textarea>
+          <div class="com-count"><span id="com-count">0</span>/300</div>
+          <button type="submit">Publicar comentario</button>
+        </form>
+        <p id="com-estado" aria-live="polite"></p>
+        <div id="com-lista"></div>
       </div>
-    </section>
+
+      
+        </section><!-- cierra .about -->
 
     <section class="challenge">
+
       <div class="wrap challenge-grid">
         <div class="challenge-intro">
           <p class="kicker">Una pregunta para el camino</p>
@@ -1674,6 +1733,14 @@ footer small { color: #d5ddcf; }
       <p class="map-note">
         Primera edición de la revista.
       </p>
+	        <form id="suscripcion-form" class="suscripcion">
+        <h3>Recibí la revista cada mes</h3>
+        <input type="text" id="sus-nombre" placeholder="Tu nombre" required>
+        <input type="email" id="sus-email" placeholder="Tu email" required>
+        <button type="submit">Suscribirme</button>
+        <p id="sus-estado" aria-live="polite"></p>
+      </form>
+
     </div>
   </div>
 </section>
@@ -2201,14 +2268,15 @@ footer small { color: #d5ddcf; }
       }
     });
 
-    if (isCorrect) {
+        if (isCorrect) {
       scoreCount++;
       scoreEl.textContent = `${scoreCount} / ${quizQuestions.length} puntos`;
-      feedbackEl.textContent = qData.feedback;
+      feedbackEl.textContent = "¡Correcto! " + qData.feedback;
     } else {
       selectedBtn.classList.add("wrong");
-      feedbackEl.textContent = "Opción incorrecta. " + qData.feedback;
+      feedbackEl.textContent = "No era esa. " + qData.feedback;
     }
+
 
     const isLast = currentQuestionIndex === quizQuestions.length - 1;
     nextBtn.textContent = isLast ? "Ver resultado →" : "Siguiente pregunta →";
@@ -2725,6 +2793,86 @@ footer small { color: #d5ddcf; }
       a.addEventListener("click", () => { tip.hidden = true; });
     });
   })();
+  
+    // ---- COMENTARIOS (auto-publicados) ----
+  (function () {
+    const form = document.getElementById("comentarios-form");
+    if (!form) return;
+    const nombre = document.getElementById("com-nombre");
+    const texto = document.getElementById("com-texto");
+    const contador = document.getElementById("com-count");
+    const estado = document.getElementById("com-estado");
+    const lista = document.getElementById("com-lista");
+
+    texto.addEventListener("input", () => { contador.textContent = texto.value.length; });
+
+    function pintar(items) {
+      lista.innerHTML = "";
+      (items || []).forEach(c => {
+        const art = document.createElement("article");
+        art.className = "comentario";
+        const h = document.createElement("strong");
+        h.textContent = c.nombre;
+        const p = document.createElement("p");
+        p.textContent = c.texto;
+        art.appendChild(h); art.appendChild(p);
+        lista.appendChild(art);
+      });
+    }
+
+    fetch("/.netlify/functions/comentarios")
+      .then(r => r.ok ? r.json() : [])
+      .then(pintar)
+      .catch(() => {});
+
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      estado.textContent = "Publicando...";
+      try {
+        const r = await fetch("/.netlify/functions/comentarios", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombre: nombre.value.trim(), texto: texto.value.trim() })
+        });
+        if (!r.ok) throw new Error();
+        form.reset();
+        contador.textContent = "0";
+        estado.textContent = "¡Gracias! Tu comentario ya está publicado.";
+        const items = await fetch("/.netlify/functions/comentarios").then(x => x.ok ? x.json() : []);
+        pintar(items);
+      } catch (err) {
+        estado.textContent = "No se pudo publicar. Probá de nuevo en un momento.";
+      }
+    });
+  })();
+
+  // ---- SUSCRIPCIÓN MENSUAL A LA REVISTA ----
+  (function () {
+    const form = document.getElementById("suscripcion-form");
+    if (!form) return;
+    const estado = document.getElementById("sus-estado");
+    form.addEventListener("submit", async e => {
+      e.preventDefault();
+      estado.textContent = "Enviando...";
+      try {
+        const r = await fetch("/.netlify/functions/suscribir", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nombre: document.getElementById("sus-nombre").value.trim(),
+            email: document.getElementById("sus-email").value.trim()
+          })
+        });
+        if (!r.ok) throw new Error();
+        form.reset();
+        estado.textContent = "¡Listo! Vas a recibir la revista cada mes.";
+      } catch (err) {
+        estado.textContent = "No se pudo enviar. Probá de nuevo en un momento.";
+      }
+    });
+  })();
+
+
 </script>
 
 </body>
